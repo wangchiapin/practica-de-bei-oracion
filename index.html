@@ -229,7 +229,7 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 
 const FIREBASE_CONFIG={apiKey:'AIzaSyC_YSDn2OH6_GKKwCq0d8QFNl3fYXzTC60',authDomain:'memorma-24dab.firebaseapp.com',projectId:'memorma-24dab',storageBucket:'memorma-24dab.firebasestorage.app',messagingSenderId:'806709458465',appId:'1:806709458465:web:f0d12acb2f911f2f165560'};
 const GA_ID='';
-const FB_OK=false;   /* 小樣本：先不連線上排行榜（正式版再決定） */
+const FB_OK=false;   /* 排行榜先只存在這台裝置；要接線上排行榜時再改 */
 const UNLOCK=/[?&]unlock=1/.test(location.search);
 
 /* ---------- 資料：30 句 ---------- */
@@ -277,29 +277,104 @@ RAW.push(...RAW2);
 const ORIG=RAW.map(([id,tk,es,en])=>({id,lv:id<=30?Math.ceil(id/10):LV2[id],es,en,tok:tk.map(s=>{const [tc,sc,py,zy]=s.split('|');return{tc,sc:sc||tc,py,zy};})}));
 
 /* ---------- 「被」句子：沿用「把」遊戲已經畫好的圖，只換句子 ---------- */
-/* [來源場景 id, 關卡, 有沒有說出是誰做的, 西文, 英文] */
+/* [來源場景 id, 關卡, 有沒有說出是誰做的, 否定詞（關卡 3）, 西文, 英文]  句型：東西＋被＋誰＋動作＋結果＋了；關卡 3：東西＋沒(有)／還沒＋被＋誰＋動作 */
 const BEI_TK='被||bèi|ㄅㄟˋ';
+const NEG_TK={'沒':'沒|没|méi|ㄇㄟˊ','沒有':'沒有|没有|méi yǒu|ㄇㄟˊ ㄧㄡˇ','還沒':'還沒|还没|hái méi|ㄏㄞˊ ㄇㄟˊ'};
 const BEI_DEF=[
- [122,1,1,'El tazón fue roto por mi hermano menor.','The bowl was broken by my younger brother.'],
- [126,1,1,'Los lentes fueron rotos por el abuelo.','The glasses were broken by Grandpa.'],
- [143,1,1,'El pan fue terminado por mi hermano mayor.','The bread was finished by my older brother.'],
- [171,1,1,'La tele fue apagada por papá.','The TV was turned off by Dad.'],
- [129,1,1,'La ropa fue ensuciada por mi hermano menor.','The clothes were made dirty by my younger brother.'],
- [124,2,0,'El celular se rompió.','The phone got broken.'],
- [130,2,0,'Los zapatos se ensuciaron.','The shoes got dirty.'],
- [149,2,0,'El jugo fue terminado.','The juice was all drunk.'],
- [153,2,0,'La puerta fue abierta.','The door was opened.']
+ [11, 1, 1, "", "La taza fue rota por él.", "The cup was broken by him."],
+ [15, 1, 1, "", "El piso fue ensuciado por el perrito.", "The floor was made dirty by the puppy."],
+ [17, 1, 1, "", "El pastel fue terminado por ella.", "The cake was finished by her."],
+ [18, 1, 1, "", "La luz fue apagada por él.", "The light was turned off by him."],
+ [20, 1, 1, "", "El sombrero fue llevado por el viento.", "The hat was blown away by the wind."],
+ [12, 1, 1, "", "La puerta fue cerrada por mamá.", "The door was closed by Mom."],
+ [13, 1, 1, "", "La ventana fue abierta por mí.", "The window was opened by me."],
+ [16, 1, 1, "", "La ropa fue lavada por mí hasta quedar limpia.", "The clothes were washed clean by me."],
+ [121, 1, 1, "", "El plato fue roto por Xiaoming.", "The plate was broken by Xiaoming."],
+ [122, 1, 1, "", "El tazón fue roto por mi hermano menor.", "The bowl was broken by my younger brother."],
+ [123, 1, 1, "", "El florero fue roto por mi hermana menor.", "The vase was broken by my younger sister."],
+ [125, 1, 1, "", "La computadora fue descompuesta por mi hermano mayor.", "The computer was broken by my older brother."],
+ [126, 1, 1, "", "Los lentes fueron rotos por el abuelo.", "The glasses were broken by Grandpa."],
+ [127, 1, 1, "", "El paraguas fue roto por ella.", "The umbrella was broken by her."],
+ [129, 1, 1, "", "La ropa fue ensuciada por mi hermano menor.", "The clothes were made dirty by my younger brother."],
+ [131, 1, 1, "", "El abrigo fue ensuciado por Xiaoming.", "The coat was made dirty by Xiaoming."],
+ [132, 1, 1, "", "La toalla fue ensuciada por mi hermana menor.", "The towel was made dirty by my younger sister."],
+ [133, 1, 1, "", "La mesa fue ensuciada por ella.", "The table was made dirty by her."],
+ [143, 1, 1, "", "El pan fue terminado por mi hermano mayor.", "The bread was finished by my older brother."],
+ [145, 1, 1, "", "El plátano fue terminado por mi hermana menor.", "The banana was eaten up by my younger sister."],
+ [146, 1, 1, "", "Las galletas fueron terminadas por la abuela.", "The cookies were eaten up by Grandma."],
+ [150, 1, 1, "", "El café fue terminado por papá.", "The coffee was finished by Dad."],
+ [152, 1, 1, "", "El té fue terminado por el abuelo.", "The tea was finished by Grandpa."],
+ [171, 1, 1, "", "La tele fue apagada por papá.", "The TV was turned off by Dad."],
+ [207, 1, 1, "", "La carta fue rota por Xiaomei.", "The letter was torn by Xiaomei."],
+ [190, 1, 1, "", "La cuerda fue cortada por mi hermano menor.", "The rope was cut by my younger brother."],
+ [185, 1, 1, "", "El pastel fue cortado por mamá.", "The cake was cut up by Mom."],
+ [208, 1, 1, "", "La bicicleta fue arreglada por papá.", "The bike was fixed by Dad."],
+ [14, 2, 0, "", "La leche fue terminada.", "The milk was all drunk."],
+ [124, 2, 0, "", "El celular se rompió.", "The phone got broken."],
+ [128, 2, 0, "", "El osito de peluche fue dañado.", "The teddy bear got damaged."],
+ [130, 2, 0, "", "Los zapatos se ensuciaron.", "The shoes got dirty."],
+ [134, 2, 0, "", "El gorro se ensució.", "The hat got dirty."],
+ [331, 2, 0, "", "El plato se ensució.", "The plate got dirty."],
+ [336, 2, 0, "", "Los lentes se ensuciaron.", "The glasses got dirty."],
+ [337, 2, 0, "", "El osito de peluche se ensució.", "The teddy bear got dirty."],
+ [341, 2, 0, "", "La taza se ensució.", "The cup got dirty."],
+ [342, 2, 0, "", "El carro se ensució.", "The car got dirty."],
+ [353, 2, 0, "", "La cartera se ensució.", "The wallet got dirty."],
+ [344, 2, 0, "", "El huevo fue roto.", "The egg was broken."],
+ [345, 2, 0, "", "La galleta quedó hecha pedazos.", "The cookie was crumbled."],
+ [356, 2, 0, "", "El despertador se rompió.", "The alarm clock got broken."],
+ [144, 2, 0, "", "La manzana fue terminada.", "The apple was eaten up."],
+ [147, 2, 0, "", "El huevo fue comido.", "The egg was eaten up."],
+ [148, 2, 0, "", "Los dulces fueron terminados.", "The candy was eaten up."],
+ [149, 2, 0, "", "El jugo fue terminado.", "The juice was all drunk."],
+ [151, 2, 0, "", "El agua fue terminada.", "The water was all drunk."],
+ [153, 2, 0, "", "La puerta fue abierta.", "The door was opened."],
+ [154, 2, 0, "", "La ventana fue cerrada.", "The window was closed."],
+ [155, 2, 0, "", "La caja fue abierta.", "The box was opened."],
+ [163, 2, 0, "", "El refrigerador fue abierto.", "The fridge was opened."],
+ [173, 2, 0, "", "El ventilador fue apagado.", "The fan was turned off."],
+ [177, 2, 0, "", "El aire acondicionado fue apagado.", "The air conditioner was turned off."],
+ [178, 2, 0, "", "La lámpara fue encendida.", "The lamp was turned on."],
+ [206, 2, 0, "", "Se perdió la cartera.", "The wallet got lost."],
+ [286, 2, 0, "", "El celular viejo fue vendido.", "The old phone was sold."],
+ [290, 2, 0, "", "Los zapatos viejos fueron tirados.", "The old shoes were thrown away."],
+ [291, 2, 0, "", "La comida sobrante fue tirada.", "The leftovers were thrown away."],
+ [295, 2, 0, "", "El libro fue llevado.", "The book was taken away."],
+ [121, 3, 1, "沒", "El plato no fue roto por Xiaoming.", "The plate was not broken by Xiaoming."],
+ [122, 3, 1, "沒有", "El tazón no fue roto por mi hermano menor.", "The bowl was not broken by my younger brother."],
+ [124, 3, 0, "沒", "El celular no se rompió.", "The phone did not get broken."],
+ [129, 3, 1, "沒", "La ropa no fue ensuciada por mi hermano menor.", "The clothes were not made dirty by my younger brother."],
+ [130, 3, 0, "沒有", "Los zapatos no se ensuciaron.", "The shoes did not get dirty."],
+ [342, 3, 1, "沒", "El carro no fue ensuciado por mi hermano mayor.", "The car was not made dirty by my older brother."],
+ [143, 3, 1, "還沒", "El pan todavía no ha sido terminado por mi hermano mayor.", "The bread has not been finished by my older brother yet."],
+ [144, 3, 0, "還沒", "La manzana todavía no ha sido terminada.", "The apple has not been eaten up yet."],
+ [149, 3, 0, "還沒", "El jugo todavía no ha sido terminado.", "The juice has not been all drunk yet."],
+ [151, 3, 0, "沒有", "El agua no fue terminada.", "The water was not all drunk."],
+ [153, 3, 0, "沒", "La puerta no fue abierta.", "The door was not opened."],
+ [154, 3, 1, "沒", "La ventana no fue cerrada por mamá.", "The window was not closed by Mom."],
+ [173, 3, 0, "沒", "El ventilador no fue apagado.", "The fan was not turned off."],
+ [178, 3, 1, "沒", "La lámpara no fue encendida por Xiaoming.", "The lamp was not turned on by Xiaoming."],
+ [185, 3, 1, "還沒", "El pastel todavía no ha sido cortado por mamá.", "The cake has not been cut by Mom yet."],
+ [208, 3, 1, "沒", "La bicicleta no fue arreglada por papá.", "The bike was not fixed by Dad."],
+ [207, 3, 1, "沒", "La carta no fue rota por Xiaomei.", "The letter was not torn by Xiaomei."],
+ [126, 3, 1, "沒", "Los lentes no fueron rotos por el abuelo.", "The glasses were not broken by Grandpa."]
 ];
-const SRC={};
-const DATA=BEI_DEF.map(([src,lv,ag,es,en],i)=>{
- const o=ORIG.find(d=>d.id===src),t=o.tok;               /* t = [誰, 把, 東西, 動作, 了] */
- const [tc,sc,py,zy]=BEI_TK.split('|');const bei={tc,sc:sc||tc,py,zy};
- const id=1001+i;SRC[id]=src;
- const tok=ag?[t[2],bei,t[0],t[3],t[4]]:[t[2],bei,t[3],t[4]];
- return{id,lv,es,en,tok,tokBa:t,ag};
+const SRC={},ZSET=new Set();
+const mkTok=str=>{const [tc,sc,py,zy]=str.split('|');return{tc,sc:sc||tc,py,zy};};
+const DATA=BEI_DEF.map(([src,lv,ag,neg,es,en],i)=>{
+ const o=ORIG.find(d=>d.id===src);if(!o)throw new Error('no source '+src);
+ const t=o.tok;                                          /* t = [誰, 把, 東西, 動作, 了] */
+ if(!(t.length===5&&t[1].tc==='把'&&t[4].tc==='了'))throw new Error('unexpected source '+src);
+ if(!KEYS[src])throw new Error('no keys '+src);
+ const bei=mkTok(BEI_TK),nt=neg?mkTok(NEG_TK[neg]):null;
+ const id=1001+i;SRC[id]=src;if(neg)ZSET.add(id);
+ let tok;
+ if(!neg)tok=ag?[t[2],bei,t[0],t[3],t[4]]:[t[2],bei,t[3],t[4]];
+ else tok=ag?[t[2],nt,bei,t[0],t[3]]:[t[2],nt,bei,t[3]];
+ return{id,lv,es,en,tok,tokBa:t,ag,z:!!neg};
 });
 
-const GLOSS={'被':['palabra clave de la pasiva: "fue … por"','key word of the passive: "was … by"'],'我':['yo','I'],'把':['palabra clave: pone el objeto antes del verbo','key word: puts the object before the verb'],'書':['libro','book'],'放在':['poner en (un lugar)','put (somewhere)'],'桌子上':['sobre la mesa','on the table'],'他':['él','he'],'包包':['bolsa, mochila','bag'],'椅子上':['sobre la silla','on the chair'],'椅子':['silla','chair'],'媽媽':['mamá','mom'],'菜':['verduras, comida','vegetables, dish'],'放進':['meter, poner dentro','put into'],'冰箱裡':['dentro del refrigerador','inside the fridge'],'外套':['abrigo, chaqueta','coat'],'掛在':['colgar en','hang on'],'門後面':['detrás de la puerta','behind the door'],'小明':['Xiaoming (nombre)','Xiaoming (a name)'],'球':['pelota','ball'],'丟進':['tirar dentro de','throw into'],'籃子裡':['dentro de la canasta','in the basket'],'她':['ella','she'],'花':['flor, flores','flower(s)'],'插在':['colocar (insertar) en','stick in'],'花瓶裡':['dentro del florero','in the vase'],'爸爸':['papá','dad'],'車':['carro, auto','car'],'停在':['estacionar en','park at'],'門口':['entrada','entrance'],'手機':['celular','cell phone'],'口袋':['bolsillo','pocket'],'老師':['maestro, maestra','teacher'],'地圖':['mapa','map'],'貼在':['pegar en','stick on'],'牆上':['en la pared','on the wall'],'行李':['equipaje','luggage'],'搬到':['llevar (cargando) hasta','carry to'],'樓上':['piso de arriba','upstairs'],'杯子':['taza, vaso','cup'],'打破':['romper','break'],'了':['partícula: acción completada','particle: completed action'],'門':['puerta','door'],'關上':['cerrar','close'],'窗戶':['ventana','window'],'打開':['abrir','open'],'弟弟':['hermano menor','younger brother'],'牛奶':['leche','milk'],'喝完':['terminar de beber','finish drinking'],'小狗':['perrito','puppy'],'地板':['piso','floor'],'弄髒':['ensuciar','make dirty'],'衣服':['ropa','clothes'],'洗乾淨':['lavar hasta dejar limpio','wash clean'],'蛋糕':['pastel','cake'],'吃完':['terminar de comer','finish eating'],'燈':['luz, lámpara','light'],'關掉':['apagar','turn off'],'作業':['tarea','homework'],'寫完':['terminar de escribir','finish writing'],'風':['viento','wind'],'帽子':['sombrero, gorra','hat'],'吹走':['llevarse (soplando)','blow away'],'禮物':['regalo','gift'],'送給':['regalar a','give (as a gift) to'],'朋友':['amigo, amiga','friend'],'錢':['dinero','money'],'還給':['devolver a','return to'],'請你':['por favor (tú)','please (you)'],'拿給':['dar (algo en la mano) a','hand to'],'蘋果':['manzana','apple'],'切成':['cortar en','cut into'],'小塊':['trozos pequeños','small pieces'],'雨傘':['paraguas','umbrella'],'借給':['prestar a','lend to'],'老闆':['jefe, dueño','boss'],'菜單':['menú','menu'],'拿來':['traer','bring'],'頭髮':['pelo, cabello','hair'],'染成':['teñir de','dye (a color)'],'金色':['rubio, dorado','blond, golden'],'請':['por favor','please'],'外面去':['ir (hacia) afuera','to the outside'],'紅包':['sobre rojo','red envelope'],'交給':['entregar a','hand over to'],'奶奶':['abuela (paterna)','grandma'],'戴在':['ponerse (sombrero) en','wear on'],'頭上':['en la cabeza','on the head']};
+const GLOSS={'被':['palabra clave de la pasiva: "fue … por"','key word of the passive: "was … by"'],'沒':['no (algo no pasó)','not (it did not happen)'],'沒有':['no (algo no pasó)','not (it did not happen)'],'還沒':['todavía no','not yet'],'我':['yo','I'],'把':['palabra clave: pone el objeto antes del verbo','key word: puts the object before the verb'],'書':['libro','book'],'放在':['poner en (un lugar)','put (somewhere)'],'桌子上':['sobre la mesa','on the table'],'他':['él','he'],'包包':['bolsa, mochila','bag'],'椅子上':['sobre la silla','on the chair'],'椅子':['silla','chair'],'媽媽':['mamá','mom'],'菜':['verduras, comida','vegetables, dish'],'放進':['meter, poner dentro','put into'],'冰箱裡':['dentro del refrigerador','inside the fridge'],'外套':['abrigo, chaqueta','coat'],'掛在':['colgar en','hang on'],'門後面':['detrás de la puerta','behind the door'],'小明':['Xiaoming (nombre)','Xiaoming (a name)'],'球':['pelota','ball'],'丟進':['tirar dentro de','throw into'],'籃子裡':['dentro de la canasta','in the basket'],'她':['ella','she'],'花':['flor, flores','flower(s)'],'插在':['colocar (insertar) en','stick in'],'花瓶裡':['dentro del florero','in the vase'],'爸爸':['papá','dad'],'車':['carro, auto','car'],'停在':['estacionar en','park at'],'門口':['entrada','entrance'],'手機':['celular','cell phone'],'口袋':['bolsillo','pocket'],'老師':['maestro, maestra','teacher'],'地圖':['mapa','map'],'貼在':['pegar en','stick on'],'牆上':['en la pared','on the wall'],'行李':['equipaje','luggage'],'搬到':['llevar (cargando) hasta','carry to'],'樓上':['piso de arriba','upstairs'],'杯子':['taza, vaso','cup'],'打破':['romper','break'],'了':['partícula: acción completada','particle: completed action'],'門':['puerta','door'],'關上':['cerrar','close'],'窗戶':['ventana','window'],'打開':['abrir','open'],'弟弟':['hermano menor','younger brother'],'牛奶':['leche','milk'],'喝完':['terminar de beber','finish drinking'],'小狗':['perrito','puppy'],'地板':['piso','floor'],'弄髒':['ensuciar','make dirty'],'衣服':['ropa','clothes'],'洗乾淨':['lavar hasta dejar limpio','wash clean'],'蛋糕':['pastel','cake'],'吃完':['terminar de comer','finish eating'],'燈':['luz, lámpara','light'],'關掉':['apagar','turn off'],'作業':['tarea','homework'],'寫完':['terminar de escribir','finish writing'],'風':['viento','wind'],'帽子':['sombrero, gorra','hat'],'吹走':['llevarse (soplando)','blow away'],'禮物':['regalo','gift'],'送給':['regalar a','give (as a gift) to'],'朋友':['amigo, amiga','friend'],'錢':['dinero','money'],'還給':['devolver a','return to'],'請你':['por favor (tú)','please (you)'],'拿給':['dar (algo en la mano) a','hand to'],'蘋果':['manzana','apple'],'切成':['cortar en','cut into'],'小塊':['trozos pequeños','small pieces'],'雨傘':['paraguas','umbrella'],'借給':['prestar a','lend to'],'老闆':['jefe, dueño','boss'],'菜單':['menú','menu'],'拿來':['traer','bring'],'頭髮':['pelo, cabello','hair'],'染成':['teñir de','dye (a color)'],'金色':['rubio, dorado','blond, golden'],'請':['por favor','please'],'外面去':['ir (hacia) afuera','to the outside'],'紅包':['sobre rojo','red envelope'],'交給':['entregar a','hand over to'],'奶奶':['abuela (paterna)','grandma'],'戴在':['ponerse (sombrero) en','wear on'],'頭上':['en la cabeza','on the head']};
 for(const k in GLOSS2)if(!GLOSS[k])GLOSS[k]=GLOSS2[k];
 function gloss(tc){return GLOSS[tc]||['',''];}
 const TOKMAP={};DATA.forEach(d=>d.tok.forEach(t=>{if(!TOKMAP[t.tc])TOKMAP[t.tc]=t;}));
@@ -307,8 +382,10 @@ const P_PLACE=[[0,2,3,1,4],[0,1,3,2,4],[0,1,2,3],[0,1,3,4,2],[0,3,1,2,4]];
 const P_RES=[[0,2,3,1,4],[0,1,3,2,4],[0,1,2,4],[0,1,2,4,3],[0,3,1,2,4]];
 const P_GIVE=[[0,2,3,1,4],[0,1,3,2,4],[0,1,2,3],[0,1,2,4,3]];
 const P_RET=[[0,2,3,1,4,5],[0,1,3,2,4,5],[0,1,2,4,3,5],[0,1,2,5,3,4]];
-const P_BEI=[[0,2,1,3,4],[1,0,2,3,4],[0,1,3,2,4]],P_BEI0=[[0,2,1,3],[1,0,2,3],[0,1,3,2]];   /* 錯誤語序：只放真的不通順的 */
-const BADPOOL={};DATA.forEach(d=>{BADPOOL[d.id]=d.ag?P_BEI:P_BEI0;});
+/* 錯誤語序：只放真的不通順的（關卡 3 最常見的錯：否定詞放在「被」後面） */
+const P_BEI=[[0,2,1,3,4],[1,0,2,3,4],[0,1,3,2,4]],P_BEI0=[[0,2,1,3],[1,0,2,3],[0,1,3,2]];
+const P_NEG=[[0,2,1,3,4],[0,1,3,2,4],[1,0,2,3,4]],P_NEG0=[[0,2,1,3],[0,1,3,2],[1,0,2,3]];
+const BADPOOL={};DATA.forEach(d=>{BADPOOL[d.id]=d.z?(d.ag?P_NEG:P_NEG0):(d.ag?P_BEI:P_BEI0);});
 
 /* ---------- 圖：程式碼直接畫 ---------- */
 const G=112;
@@ -749,6 +826,25 @@ function sceneM(k,who){
  return[before,after];
 }
 
+
+/* Z：東西沒有變化（關卡 3：沒被…）——用同一個「之前」畫面，「之後」右上角加一個「＝」 */
+function sceneZ(k,who){
+ const s=resolveSP(k),pe=pers(who);
+ let X0,Y0,px,bg='';
+ if(s.m==='tbl'){X0=146;Y0=G-34;px=88;bg=TB(108,76);}
+ else if(s.m==='floor'){X0=146;Y0=G;px=88;}
+ else if(s.m==='free'){X0=140;Y0=G;px=60;}
+ else if(s.m==='rack'){const o=OB[s.ok||'shirt'];X0=164;Y0=26+o.h*OK(o);px=100;bg=PL.rack.back();}
+ else if(s.m==='bed'){X0=0;Y0=0;px=64;bg=PL.bed.back();}
+ else if(s.m==='desk'){X0=140;Y0=G-38;px=70;bg=PL.desk.back();}
+ else throw new Error('Z '+k);
+ let ia=s.a(X0,Y0);
+ const zk={tbl:1.35,floor:1.3}[s.m];
+ if(zk)ia=`<g transform="translate(${X0} ${Y0}) scale(${zk}) translate(${-X0} ${-Y0})">${ia}</g>`;
+ const bgA=s.onFirst?(s.bgOn||K.white):K.white,same=bg+ia+PE(px,pe);
+ return[panel(same,bgA),panel(same+TX(180,22,'＝',22,K.dark),bgA)];
+}
+
 /* ===== 新素材庫：給予、搬運、處置（第 3 關） ===== */
 ob('chair',24,34,(x,y)=>R(x-10,y-34,4,34,K.woodD,1)+R(x-12,y-34,5,20,K.wood,1)+R(x-12,y-14,24,4,K.wood,1)+R(x+8,y-10,4,10,K.woodD,1)+R(x-12,y-10,4,10,K.woodD,1),{k:1.1});
 ob('gift',20,18,(x,y)=>R(x-10,y-16,20,16,K.pink,2)+R(x-2,y-16,4,16,K.yellow,.5)+R(x-10,y-9,20,3,K.yellow,.5)+PA(`M${x} ${y-16} q-6 -7 -6 -2 q0 3 6 2 q6 1 6 -2 q0 -5 -6 2`,'none',1.1));
@@ -845,10 +941,11 @@ const ambigPair=(a,b)=>{const x=SPEC[a],y=SPEC[b];return !!(x&&y&&x[0]==='G'&&y[
 function buildScene(id){const sp=SPEC[id];if(!sp)throw new Error('no scene '+id);
  const f={P:sceneP,W:sceneW,K:sceneK,M:typeof sceneM==='function'?sceneM:null,G:typeof sceneG==='function'?sceneG:null,T:typeof sceneT==='function'?sceneT:null,D:typeof sceneD==='function'?sceneD:null}[sp[0]];
  if(!f)throw new Error('scene type '+sp[0]);return f(...sp.slice(1));}
-function scene(id){const q=SRC[id]||id;return SC[q]||(SC[q]=buildScene(q));}
-const keysOf=id=>KEYS[SRC[id]||id]||[];
-function pickOthers(s){const ks=keysOf(s.id);const all=shuffle(DATA.filter(d=>d.lv===s.lv&&d.id!==s.id&&!ambigPair(s.id,d.id)));const same=all.filter(d=>{const k=keysOf(d.id);return k[0]===ks[0]&&k[1]!==ks[1];});const ok=all.filter(d=>!keysOf(d.id).some(k=>ks.includes(k)));const out=[];if(same.length)out.push(same[0]);for(const d of (ok.length>=2?ok:all)){if(out.length>=2)break;if(!out.includes(d))out.push(d);}return out;}
-const LV=[{tc:'關卡 1',sc:'关卡 1',es:'Nivel 1',en:'Level 1',ex:1001},{tc:'關卡 2',sc:'关卡 2',es:'Nivel 2',en:'Level 2',ex:1006}];
+const SCZ={};
+function scene(id){const q=SRC[id]||id;if(ZSET.has(id))return SCZ[q]||(SCZ[q]=sceneZ(...SPEC[q].slice(1)));return SC[q]||(SC[q]=buildScene(q));}
+const keysOf=id=>ZSET.has(id)?[(KEYS[SRC[id]]||[])[0],'intact']:(KEYS[SRC[id]||id]||[]);
+function pickOthers(s){const ks=keysOf(s.id);const all=shuffle(DATA.filter(d=>(s.lv===3||d.lv===s.lv)&&d.id!==s.id&&!ambigPair(s.id,d.id)));const same=all.filter(d=>{const k=keysOf(d.id);return k[0]===ks[0]&&k[1]!==ks[1];});const ok=all.filter(d=>!keysOf(d.id).some(k=>ks.includes(k)));const out=[];if(same.length)out.push(same[0]);for(const d of (ok.length>=2?ok:all)){if(out.length>=2)break;if(!out.includes(d))out.push(d);}return out;}
+const LV=[{tc:'關卡 1',sc:'关卡 1',es:'Nivel 1',en:'Level 1',ex:1001},{tc:'關卡 2',sc:'关卡 2',es:'Nivel 2',en:'Level 2',ex:1029},{tc:'關卡 3',sc:'关卡 3',es:'Nivel 3',en:'Level 3',ex:1060}];
 const I={es:{
  sub:'Practica la oración con 被',name:'Tu nombre',ph:'Escribe tu nombre',ui:'Idioma',script:'Caracteres',read:'Lectura',py:'Pinyin',zy:'Zhuyin',off:'Sin lectura',start:'Empezar',pick:'Elige un nivel',needName:'Escribe tu nombre para empezar.',locked:'Bloqueado: consigue 1 estrella en el nivel anterior',rank:'Ranking',menu:'Menú',
  formula:'Fórmula',who:'Quién',thing:'Cosa',act:'Acción + resultado',begin:'Comenzar',example:'Ejemplo',
@@ -1128,8 +1225,8 @@ function nameHTML(){const t=T();return `<div class="card"><div class="lab" style
 function gearBar(){return `<div class="bar"><div></div><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div>`;}
 function lvName(l){return cfg.zh==='sc'?l.sc:l.tc;}
 function renderStart(){
- const t=T(),ids=[1001,1006],tl=[-4,2,-2,3];
- let tiles='';[1001,1003,1006,1008].forEach((id,i)=>{tiles+=`<div class="tile" style="--r:${tl[i]}deg">${thumb(id,1)}</div>`;});
+ const t=T(),L1d=DATA.filter(d=>d.lv===1),L2d=DATA.filter(d=>d.lv===2),L3d=DATA.filter(d=>d.lv===3),ids=[L1d[0].id,L2d[0].id,L3d[0].id],tl=[-4,2,-2,3];
+ let tiles='';[L1d[0].id,L1d[8].id,L2d[1].id,L2d[8].id].forEach((id,i)=>{tiles+=`<div class="tile" style="--r:${tl[i]}deg">${thumb(id,1)}</div>`;});
  let h=`<div class="home hb">${gearBar()}<div class="strip">${tiles}</div>${titleHTML('b')}${nameHTML()}<h2 class="pick">${t.pick}</h2><div class="tickets">`;
  LV.forEach((l,i)=>{const n=i+1,st=prog[n]||0;h+=`<button class="ticket" onclick="openLevel(${n})"><div class="th">${thumb(ids[i],1)}</div><div class="tm"><div class="t">${lvName(l)}</div>${isZH()?'':`<div class="d">${l[cfg.lang]}</div>`}</div><div class="stars">${starsStr(st)}</div></button>`;});
  return h+`</div><button class="btn block" onclick="openLB()">${t.rank}</button></div>`;

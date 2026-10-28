@@ -1,0 +1,90 @@
+# 被 · Oración con 被
+### Práctica de la oración pasiva con 被 (被字句) para hispanohablantes · 給西語學習者的被字句練習遊戲
+
+🎮 **Jugar / 開始玩:** https://wangchiapin.github.io/practica-de-bei-oracion/
+(需要先在這個 repo 的 Settings → Pages 把來源設成 `main`，根目錄)
+
+El juego hermano de **把** · https://wangchiapin.github.io/practica-de-ba-oracion/
+
+---
+
+## 🇪🇸 Español
+
+**被 (Oración con 被)** es un juego web para practicar la pasiva en chino mandarín. En cada pregunta ves dos imágenes, **antes** y **después**, y debes formar o reconocer la oración correcta. Usa las mismas imágenes del juego **把**: es el mismo hecho, contado desde el otro lado.
+
+> 東西 + **被** + 誰 + 動作 + 結果 + 了  
+> Ejemplo: 杯子**被**他打破了。 (La taza fue rota por él.)
+
+### Cómo se juega
+- En la **pantalla de inicio** escribes tu **apodo** (obligatorio), eliges el nivel y juegas. Los textos de la interfaz se ven en dos líneas: chino grande y español/inglés pequeño.
+- **3 niveles** con un banco de oraciones que sigue creciendo (cada partida elige 10 al azar):
+  1. **關卡 1 · Nivel 1** – se dice quién lo hizo: 碗被弟弟打破了
+  2. **關卡 2 · Nivel 2** – no se dice quién lo hizo: 手機被摔壞了
+  3. **關卡 3 · Nivel 3** – la negación va **antes** de 被 (沒被、沒有被、還沒被): 杯子沒被打破 / 蛋糕還沒被吃完
+- Los tipos de pregunta:
+  - **Ordenar tarjetas**: mira las imágenes y ordena las palabras.
+  - **Escuchar y elegir**: oye la oración y elige la imagen de "después". En el nivel 3 siempre aparece el mismo objeto con otro resultado (por ejemplo, la taza rota), para que se note la diferencia entre 被 y 沒被. En las imágenes de "no pasó nada" aparece el signo ＝.
+  - **Elegir la oración correcta**: una frase correcta y dos incorrectas (solo errores que de verdad no se pueden decir, por ejemplo 被 mal colocado; en el nivel 3, el error típico: 被沒 en lugar de 沒被).
+  - **把 ⇒ 被** (solo nivel 1): lees una oración con 把 y eliges la oración con 被 que significa lo mismo. Aquí sí aparece una opción con los papeles invertidos (哥哥被麵包吃完了), porque lo que se practica es quién hace qué.
+- Todas las imágenes están dibujadas con código (SVG), con un estilo sencillo y limpio.
+
+### Puntos
+| Acción | Puntos |
+|---|---|
+| Correcta a la primera | 100 (con racha ×1.2 y ×1.5) |
+| Bonus de rapidez (primeros 10 s) | hasta +50 |
+| Correcta en el segundo intento | 50 |
+| Usar "Pista" (traducción) | −20 |
+| Usar el mini diccionario | sin penalización |
+
+No hay vidas. **Estrellas** según las respuestas correctas a la primera (50 %, 70 % y 90 %). Los tres niveles están abiertos desde el principio. Al final hay un **repaso de errores** y un **ranking** (mejor puntaje por jugador; por ahora solo se guarda en el dispositivo).
+
+### Idiomas y lectura
+Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 / 简体**, lectura en **pinyin / zhuyin (注音) / ambos / sin lectura** con pronunciación de Taiwán, voz `zh-TW` en tres velocidades. Los ajustes se comparten con los demás juegos mediante `localStorage` (`hanziGames.settings`). Nombre, progreso y ranking se guardan aparte (`bei_cfg`, `bei_prog`, `bei_lb`).
+
+### Para profesores
+- Es un solo archivo: `index.html`. Funciona en GitHub Pages sin compilar nada.
+- Las imágenes y los datos de cada oración vienen del juego 把: cada oración 被 apunta a una escena de 把 (`BEI_DEF`, primer número). Para agregar oraciones, añade una fila en `BEI_DEF` con una escena que ya exista.
+- El ranking en línea (Firebase) está desactivado (`FB_OK=false`). Las visitas y las partidas se registran como en los otros juegos, con el código `bei`.
+- Pendiente: oraciones con 會被, 不要被 y otros usos de 被 que necesitan imágenes nuevas.
+
+---
+
+## 🇹🇼 繁體中文
+
+**被** 是一個練習「被字句」的網頁小遊戲。每題會看到「之前」和「之後」兩張圖，學生要排出或認出正確的句子。圖片和「把」遊戲共用：同一件事，從另一邊來說。
+
+> 東西 ＋ **被** ＋ 誰 ＋ 動作 ＋ 結果 ＋ 了
+
+### 玩法
+- **首頁只有一頁**：輸入暱稱（必填）、選關卡、開始玩；介面文字分兩行，上面中文大字、下面西文／英文小字
+- 共 **3 關**，題庫會持續增加（每次遊玩隨機抽 10 題）：
+  1. 關卡 1：有說是誰做的（碗被弟弟打破了）
+  2. 關卡 2：沒說是誰做的（手機被摔壞了）
+  3. 關卡 3：否定詞放在「被」前面（杯子沒被打破、蛋糕還沒被吃完）
+- 題型：**排字卡**、**聽音選圖**、**選出正確的句子**，關卡 1 另有 **把 ⇒ 被** 轉換題
+  - 關卡 3 的聽音題一定會有「同一個東西、不同結果」的圖（例如破掉的杯子），讓學生分辨「被打破了」和「沒被打破」；「什麼都沒變」的圖右上角有「＝」
+  - 選句子題的錯誤選項只用真正不通順的句子（關卡 3 放最常見的錯：「被沒」）；轉換題才會放主客顛倒的選項，因為要練的就是誰做了什麼
+- 圖片全部用程式碼繪製，風格簡單乾淨
+
+### 計分與結束
+- 第一次答對 100 分，連續答對有加成；10 秒內答對最多再加 50 分；第二次才答對得 50 分；看「提示」扣 20 分，查「小字典」不扣分
+- 不扣命，每關 10 題；依第一次就答對的比例給 1～3 顆星（50%、70%、90%）；三個關卡一開始就全部開放
+- 結算有錯題複習；排行榜目前只存在該裝置
+
+### 語言與讀音
+和「把」遊戲一樣：Español／English／只有中文、繁體／简体、拼音／注音／兩個都顯示／不顯示（台灣讀音）、語音三種語速；設定與其他遊戲共用 `hanziGames.settings`。
+
+### 老師設定
+- 單一檔案 `index.html`，放在 GitHub Pages 即可使用（Settings → Pages → main，根目錄）
+- 每個被字句都對應「把」遊戲的一個場景（`BEI_DEF` 的第一個數字）；要新增句子，在 `BEI_DEF` 加一行、用已經有的場景即可
+- 線上排行榜先關閉（`FB_OK=false`）；訪客和遊玩紀錄比照其他遊戲，用代號 `bei` 記錄
+- 之後可以加：會被、不要被等需要新圖的用法
+
+---
+
+由「每天一分鐘 · 一分鐘學中文」製作 · Hecho por Ben (@cadadiaunosminutos_ben_chino)
+
+## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
+iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到最上面（Safari 正常）。
+處理方式（已套用在本遊戲）：`<meta name="viewport">` 設 `maximum-scale=1`，不使用 `viewport-fit=cover`；`<html>` 加 `html{color-scheme:light}`。新增頁面請照這個寫。
