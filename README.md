@@ -38,7 +38,7 @@ El juego hermano de **把** · https://wangchiapin.github.io/practica-de-ba-orac
 | Usar "Pista" (traducción) | −20 |
 | Usar el mini diccionario | sin penalización |
 
-No hay vidas. **Estrellas** según las respuestas correctas a la primera (50 %, 70 % y 90 %). Los cuatro niveles están abiertos desde el principio. Al final hay un **repaso de errores** y un **ranking** (mejor puntaje por jugador; por ahora solo se guarda en el dispositivo).
+No hay vidas. **Estrellas** según las respuestas correctas a la primera (50 %, 70 % y 90 %). Los cuatro niveles están abiertos desde el principio. Al final hay un **repaso de errores** y un **ranking** (mejor puntaje por jugador, top 10).
 
 ### Idiomas y lectura
 Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 / 简体**, lectura en **pinyin / zhuyin (注音) / ambos / sin lectura** con pronunciación de Taiwán, voz `zh-TW` en tres velocidades. Los ajustes se comparten con los demás juegos mediante `localStorage` (`hanziGames.settings`). Nombre, progreso y ranking se guardan aparte (`bei_cfg`, `bei_prog`, `bei_lb`).
@@ -47,7 +47,7 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 - Es un solo archivo: `index.html`. Funciona en GitHub Pages sin compilar nada.
 - Las imágenes y los datos de cada oración vienen del juego 把: cada oración 被 apunta a una escena de 把 (`BEI_DEF`, primer número). Para agregar oraciones, añade una fila en `BEI_DEF` con una escena que ya exista. La biblioteca de imágenes (`OB`, `PL`, `RAW2`/`RAW3`, `SPEC`, `KEYS`…) es una copia de la de 把: si se dibujan escenas nuevas en 把, hay que copiarlas aquí también, junto con `SIMSET` (parejas de imágenes parecidas que no deben salir juntas en «Escuchar y elegir»).
 - La carpeta `docs/` guarda la tabla de revisión de las oraciones nuevas (`新增句子_請審查.csv`).
-- El ranking en línea (Firebase) está desactivado (`FB_OK=false`). Las visitas y las partidas se registran como en los otros juegos, con el código `bei`.
+- **Ranking compartido (Firebase Firestore):** conectado al proyecto `memorma-24dab` (el mismo de 把, Memorama y Ordena el Armario), con inicio de sesión anónimo; los puntajes se guardan en la colección `beiLeaderboard` (mejor puntaje de cada uno de los cuatro niveles, suma total, 10 mejores). La configuración está en `FIREBASE_CONFIG` de `index.html`; si no se puede conectar, el ranking solo se guarda en el dispositivo. Las visitas y las partidas se registran como en los otros juegos, con el código `bei`.
 - El nivel 4 (`F_DEF`) no sale del juego 把: cada oración trae sus propias tarjetas y usa imágenes nuevas (`SC.fA`, `fB`, `fC`, `fD`; con ✕ para 不要被). Para agregar oraciones, añade una fila en `F_DEF` con una imagen que ya exista; una imagen nueva se dibuja en el mismo estilo.
 - Pendiente: reto mixto 把 + 被 y otros usos de 被.
 
@@ -74,7 +74,7 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 ### 計分與結束
 - 第一次答對 100 分，連續答對有加成；10 秒內答對最多再加 50 分；第二次才答對得 50 分；看「提示」扣 20 分，查「小字典」不扣分
 - 不扣命，每關 10 題；依第一次就答對的比例給 1～3 顆星（50%、70%、90%）；四個關卡一開始就全部開放
-- 結算有錯題複習；排行榜目前只存在該裝置
+- 結算有錯題複習，另有排行榜（每人只留最高分，前 10 名）
 
 ### 語言與讀音
 和「把」遊戲一樣：Español／English／只有中文、繁體／简体、拼音／注音／兩個都顯示／不顯示（台灣讀音）、語音三種語速；設定與其他遊戲共用 `hanziGames.settings`。
@@ -83,7 +83,7 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 - 單一檔案 `index.html`，放在 GitHub Pages 即可使用（Settings → Pages → main，根目錄）
 - 每個被字句都對應「把」遊戲的一個場景（`BEI_DEF` 的第一個數字）；要新增句子，在 `BEI_DEF` 加一行、用已經有的場景即可。圖庫（`OB`、`PL`、`RAW2`／`RAW3`、`SPEC`、`KEYS` 等）是從「把」遊戲複製來的：如果「把」新畫了場景，這裡也要一起複製過來，並更新 `SIMSET`（圖片太像、聽音題不要同時出現的組合）
 - `docs/` 資料夾放新增句子的審查表（`新增句子_請審查.csv`）
-- 線上排行榜先關閉（`FB_OK=false`）；訪客和遊玩紀錄比照其他遊戲，用代號 `bei` 記錄
+- 排行榜已接到 Firebase 專案 `memorma-24dab`（與「把」、翻牌記憶、收納小達人共用，匿名登入，集合 `beiLeaderboard`，四個關卡各留最高分、加總排名，前 10 名）；設定在 `index.html` 的 `FIREBASE_CONFIG`，連不上時只存在該裝置；訪客和遊玩紀錄比照其他遊戲，用代號 `bei` 記錄
 - 關卡 4（`F_DEF`）不是從「把」遊戲來的：每句自己帶字卡，圖是新畫的（`SC.fA`、`fB`、`fC`、`fD`，不要被的圖有 ✕）；新增句子就在 `F_DEF` 加一行、用已經有的圖，需要新圖時照同樣風格再畫
 - 之後可以加：把和被混合挑戰、被的其他用法
 

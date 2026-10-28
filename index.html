@@ -229,7 +229,7 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 
 const FIREBASE_CONFIG={apiKey:'AIzaSyC_YSDn2OH6_GKKwCq0d8QFNl3fYXzTC60',authDomain:'memorma-24dab.firebaseapp.com',projectId:'memorma-24dab',storageBucket:'memorma-24dab.firebasestorage.app',messagingSenderId:'806709458465',appId:'1:806709458465:web:f0d12acb2f911f2f165560'};
 const GA_ID='';
-const FB_OK=false;   /* 排行榜先只存在這台裝置；要接線上排行榜時再改 */
+const FB_OK=!/^YOUR/.test(FIREBASE_CONFIG.apiKey);   /* 線上排行榜：與「把」共用 memorma-24dab，集合 beiLeaderboard；連不上時只存在這台裝置 */
 const UNLOCK=/[?&]unlock=1/.test(location.search);
 
 /* ---------- 資料：30 句 ---------- */
