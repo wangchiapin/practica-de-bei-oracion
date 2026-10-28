@@ -1597,7 +1597,7 @@ function openLevel(n){
 function variants(s){const t=s.tok;return BADPOOL[s.id].map(ix=>ix.map(i=>t[i]));}
 function beginLevel(){
  const pool=shuffle(DATA.filter(d=>d.lv===ST.lv)).slice(0,10);
- const MIX=ST.lv===1?['A','T','L','P','A','T','L','A','P','T']:['A','L','P','A','L','P','A','L','A','P'];
+ const MIX=['A','L','P','A','L','P','A','L','A','P']; // 把⇒被轉換題(T)先停用,程式保留,之後再決定要不要加回來
  const types=shuffle(MIX.slice(0,pool.length));
  ST.qs=pool.map((s,i)=>({s,type:types[i]}));
  ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('ba_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start('L'+ST.lv,cfg.name);}catch(e){}go('game');

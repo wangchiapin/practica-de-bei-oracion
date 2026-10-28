@@ -26,7 +26,6 @@ El juego hermano de **把** · https://wangchiapin.github.io/practica-de-ba-orac
   - **Ordenar tarjetas**: mira las imágenes y ordena las palabras.
   - **Escuchar y elegir**: oye la oración y elige la imagen de "después". En el nivel 3 siempre aparece el mismo objeto con otro resultado (por ejemplo, la taza rota), para que se note la diferencia entre 被 y 沒被. En las imágenes de "no pasó nada" aparece el signo ＝.
   - **Elegir la oración correcta**: una frase correcta y dos incorrectas (solo errores que de verdad no se pueden decir, por ejemplo 被 mal colocado; en el nivel 3, el error típico: 被沒 en lugar de 沒被).
-  - **把 ⇒ 被** (solo nivel 1): lees una oración con 把 y eliges la oración con 被 que significa lo mismo. Aquí sí aparece una opción con los papeles invertidos (哥哥被麵包吃完了), porque lo que se practica es quién hace qué.
 - Todas las imágenes están dibujadas con código (SVG), con un estilo sencillo y limpio.
 
 ### Puntos
@@ -49,7 +48,7 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 - La carpeta `docs/` guarda la tabla de revisión de las oraciones nuevas (`新增句子_請審查.csv`).
 - **Ranking compartido (Firebase Firestore):** conectado al proyecto `memorma-24dab` (el mismo de 把, Memorama y Ordena el Armario), con inicio de sesión anónimo; los puntajes se guardan en la colección `beiLeaderboard` (mejor puntaje de cada uno de los cuatro niveles, suma total, 10 mejores). La configuración está en `FIREBASE_CONFIG` de `index.html`; si no se puede conectar, el ranking solo se guarda en el dispositivo. Las visitas y las partidas se registran como en los otros juegos, con el código `bei`.
 - El nivel 4 (`F_DEF`) no sale del juego 把: cada oración trae sus propias tarjetas y usa imágenes nuevas (`SC.fA`, `fB`, `fC`, `fD`; con ✕ para 不要被). Para agregar oraciones, añade una fila en `F_DEF` con una imagen que ya exista; una imagen nueva se dibuja en el mismo estilo.
-- Pendiente: reto mixto 把 + 被 y otros usos de 被.
+- Pendiente: reto mixto 把 + 被, la pregunta «把 ⇒ 被» (el código `T` sigue en el archivo pero está desactivado; falta una oración con 把 para cada nivel) y otros usos de 被.
 
 ---
 
@@ -66,9 +65,9 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
   2. 關卡 2：沒說是誰做的（手機被摔壞了）
   3. 關卡 3：否定詞放在「被」前面（杯子沒被打破、蛋糕還沒被吃完）
   4. 關卡 4：還沒發生的事，用「會被」和「不要被」（杯子會被弟弟打破、衣服不要被雨淋濕）；句子後面沒有「了」。圖左邊是「現在」、右邊是「之後」，不要被的右圖加紅色 ✕，意思是「不要變成這樣」
-- 題型：**排字卡**、**聽音選圖**、**選出正確的句子**，關卡 1 另有 **把 ⇒ 被** 轉換題
+- 題型：**排字卡**、**聽音選圖**、**選出正確的句子**
   - 關卡 3 的聽音題一定會有「同一個東西、不同結果」的圖（例如破掉的杯子），讓學生分辨「被打破了」和「沒被打破」；「什麼都沒變」的圖右上角有「＝」
-  - 選句子題的錯誤選項只用真正不通順的句子（關卡 3 放最常見的錯：「被沒」）；轉換題才會放主客顛倒的選項，因為要練的就是誰做了什麼
+  - 選句子題的錯誤選項只用真正不通順的句子（關卡 3 放最常見的錯：「被沒」）
 - 圖片全部用程式碼繪製，風格簡單乾淨
 
 ### 計分與結束
@@ -85,7 +84,7 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 - `docs/` 資料夾放新增句子的審查表（`新增句子_請審查.csv`）
 - 排行榜已接到 Firebase 專案 `memorma-24dab`（與「把」、翻牌記憶、收納小達人共用，匿名登入，集合 `beiLeaderboard`，四個關卡各留最高分、加總排名，前 10 名）；設定在 `index.html` 的 `FIREBASE_CONFIG`，連不上時只存在該裝置；訪客和遊玩紀錄比照其他遊戲，用代號 `bei` 記錄
 - 關卡 4（`F_DEF`）不是從「把」遊戲來的：每句自己帶字卡，圖是新畫的（`SC.fA`、`fB`、`fC`、`fD`，不要被的圖有 ✕）；新增句子就在 `F_DEF` 加一行、用已經有的圖，需要新圖時照同樣風格再畫
-- 之後可以加：把和被混合挑戰、被的其他用法
+- 之後可以加：把和被混合挑戰、「把 ⇒ 被」轉換題（程式 `T` 還在、目前停用，每一關都要有對應的把句子）、被的其他用法
 
 ---
 
