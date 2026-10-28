@@ -45,7 +45,8 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 
 ### Para profesores
 - Es un solo archivo: `index.html`. Funciona en GitHub Pages sin compilar nada.
-- Las imágenes y los datos de cada oración vienen del juego 把: cada oración 被 apunta a una escena de 把 (`BEI_DEF`, primer número). Para agregar oraciones, añade una fila en `BEI_DEF` con una escena que ya exista.
+- Las imágenes y los datos de cada oración vienen del juego 把: cada oración 被 apunta a una escena de 把 (`BEI_DEF`, primer número). Para agregar oraciones, añade una fila en `BEI_DEF` con una escena que ya exista. La biblioteca de imágenes (`OB`, `PL`, `RAW2`/`RAW3`, `SPEC`, `KEYS`…) es una copia de la de 把: si se dibujan escenas nuevas en 把, hay que copiarlas aquí también, junto con `SIMSET` (parejas de imágenes parecidas que no deben salir juntas en «Escuchar y elegir»).
+- La carpeta `docs/` guarda la tabla de revisión de las oraciones nuevas (`新增句子_請審查.csv`).
 - El ranking en línea (Firebase) está desactivado (`FB_OK=false`). Las visitas y las partidas se registran como en los otros juegos, con el código `bei`.
 - El nivel 4 (`F_DEF`) no sale del juego 把: cada oración trae sus propias tarjetas y usa imágenes nuevas (`SC.fA`, `fB`, `fC`, `fD`; con ✕ para 不要被). Para agregar oraciones, añade una fila en `F_DEF` con una imagen que ya exista; una imagen nueva se dibuja en el mismo estilo.
 - Pendiente: reto mixto 把 + 被 y otros usos de 被.
@@ -80,7 +81,8 @@ Igual que el juego 把: interfaz **Español / English / solo chino**, **繁體 /
 
 ### 老師設定
 - 單一檔案 `index.html`，放在 GitHub Pages 即可使用（Settings → Pages → main，根目錄）
-- 每個被字句都對應「把」遊戲的一個場景（`BEI_DEF` 的第一個數字）；要新增句子，在 `BEI_DEF` 加一行、用已經有的場景即可
+- 每個被字句都對應「把」遊戲的一個場景（`BEI_DEF` 的第一個數字）；要新增句子，在 `BEI_DEF` 加一行、用已經有的場景即可。圖庫（`OB`、`PL`、`RAW2`／`RAW3`、`SPEC`、`KEYS` 等）是從「把」遊戲複製來的：如果「把」新畫了場景，這裡也要一起複製過來，並更新 `SIMSET`（圖片太像、聽音題不要同時出現的組合）
+- `docs/` 資料夾放新增句子的審查表（`新增句子_請審查.csv`）
 - 線上排行榜先關閉（`FB_OK=false`）；訪客和遊玩紀錄比照其他遊戲，用代號 `bei` 記錄
 - 關卡 4（`F_DEF`）不是從「把」遊戲來的：每句自己帶字卡，圖是新畫的（`SC.fA`、`fB`、`fC`、`fD`，不要被的圖有 ✕）；新增句子就在 `F_DEF` 加一行、用已經有的圖，需要新圖時照同樣風格再畫
 - 之後可以加：把和被混合挑戰、被的其他用法
