@@ -1582,6 +1582,79 @@ async function lbLoad(){
  return Object.entries(localLB()).map(([name,e])=>({name,l1:e.l1||0,l2:e.l2||0,l3:e.l3||0,l4:e.l4||0,total:(e.l1||0)+(e.l2||0)+(e.l3||0)+(e.l4||0)})).sort((a,b)=>b.total-a.total).slice(0,10);
 }
 
+/* ===== 班級模式（訂閱功能）：連結帶 ?class=班級碼 → 成績回傳給老師，老師在「老師管理中心」產生連結 =====
+   跟「跑吧」「墨龍飛天」同一套：成績寫到中央專案 subscription-48d3c 的 class_scores（每位學生×每一關一筆，只留最高分）。
+   CLS_RELEASE=false 時，班級連結一律顯示「維修中」；網址再加 &dev=1 可以先測試。（開放前把它改成 true）
+   沒有 ?class= 的時候，這整段什麼都不做，遊戲跟原來一樣。 */
+const CLS_GAME='bei',CLS_RELEASE=false;
+const CLS=(function(){const q=new URLSearchParams(location.search),id=String(q.get('class')||'').toLowerCase();return{on:/^[a-z0-9]{8,32}$/.test(id),id,dev:q.get('dev')==='1',data:null,fatal:'',msg:'',rows:null};})();
+const CLS_TXT={
+ maint:['維修中，請稍後再來','维修中，请稍后再来','En mantenimiento, vuelve más tarde','Under maintenance — please come back later'],
+ linkBad:['這個連結已失效，請向老師確認','这个链接已失效，请向老师确认','Este enlace ya no es válido; pregunta a tu profesor','This link is no longer valid — please ask your teacher'],
+ linkOff:['暫時連不上，請稍後再試','暂时连不上，请稍后再试','No se pudo conectar; inténtalo más tarde','Could not connect — please try again later'],
+ note:['班級模式：成績會回傳給老師','班级模式：成绩会回传给老师','Modo clase: tus resultados se envían al profesor','Class mode: your scores go to your teacher'],
+ sending:['成績傳送中…','成绩传送中…','Enviando resultado…','Sending score…'],
+ sentOk:['成績已回傳給老師','成绩已回传给老师','Resultado enviado al profesor','Score sent to your teacher'],
+ sentFail:['成績沒有送出，請檢查網路','成绩没有送出，请检查网络','No se pudo enviar el resultado; revisa tu conexión','Score not sent — check your connection'],
+ sentExpired:['這個班級連結目前無法記錄成績，請通知老師','这个班级链接目前无法记录成绩，请通知老师','Este enlace de clase no puede guardar resultados; avisa a tu profesor','This class link cannot record scores right now — tell your teacher'],
+ board:['班級排行榜','班级排行榜','Clasificación de la clase','Class leaderboard']
+};
+const clsT=k=>{const a=CLS_TXT[k],zh=cfg.zh==='sc'?a[1]:a[0];return cfg.lang==='zh'?zh:zh+' · '+(cfg.lang==='es'?a[2]:a[3]);};
+async function nickHash(nick){
+ const norm=String(nick).normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
+ try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(norm));return Array.from(new Uint8Array(buf)).slice(0,8).map(b=>b.toString(16).padStart(2,'0')).join('');}
+ catch(e){let h1=0x811c9dc5,h2=0x01000193;for(const ch of norm){const c=ch.codePointAt(0);h1=Math.imul(h1^c,16777619)>>>0;h2=Math.imul(h2+c,2246822519)>>>0;}return h1.toString(16).padStart(8,'0')+h2.toString(16).padStart(8,'0');}
+}
+function clsShowFatal(key){
+ let d=document.getElementById('clsFatal');if(!d){d=document.createElement('div');d.id='clsFatal';d.style.cssText='position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;padding:18px;background:#f6f3ec;color:#4a4946;text-align:center;font-size:18px;line-height:1.7';document.body.appendChild(d);}
+ d.textContent=clsT(key);
+}
+async function clsLoad(){
+ if(!CLS.on||CLS.data)return;
+ try{const db=await repConn();const s=await db.collection('classes').doc(CLS.id).get();if(!s.exists)CLS.fatal='linkBad';else CLS.data=s.data();}
+ catch(e){console.warn(e);CLS.fatal='linkOff';}
+ if(CLS.fatal)clsShowFatal(CLS.fatal);
+}
+function clsBoot(){
+ if(!CLS.on||document.getElementById('clsBar'))return;
+ if(!CLS_RELEASE&&!CLS.dev){clsShowFatal('maint');return;}
+ const b=document.createElement('div');b.id='clsBar';b.style.cssText='background:#e9e0cd;color:#4a4946;font-size:13px;text-align:center;padding:6px 10px';b.textContent=clsT('note');document.body.insertBefore(b,document.body.firstChild);
+ clsLoad();
+}
+async function clsSubmit(){
+ const lv=ST.lv,name=String(cfg.name||'').trim().slice(0,16),score=ST.score;
+ CLS.msg=clsT('sending');CLS.rows=null;
+ const extra={ok:ST.results.filter(r=>r.ok).length,q:ST.qs.length,f:ST.firstOK};
+ try{
+  if(!CLS.data)await clsLoad();
+  if(!CLS.data)throw{code:'unavailable'};
+  const db=await repConn(),h=await nickHash(name),k='lv'+lv;
+  const ref=db.collection('class_scores').doc(CLS.id+'_'+CLS_GAME+'_'+k+'_'+h);
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const old=await ref.get();
+  if(!old.exists)await ref.set({cid:CLS.id,owner:CLS.data.owner,game:CLS_GAME,k,h,nick:name,best:score,plays:1,lastAt:ts,extra});
+  else{const o=old.data(),u={nick:name,plays:(o.plays||0)+1,lastAt:ts,best:Math.max(o.best||0,score)};if(score>(o.best||0))u.extra=extra;await ref.update(u);}
+  CLS.msg=clsT('sentOk');
+  if(CLS.data.showBoard===true){
+   const snap=await db.collection('class_scores').where('cid','==',CLS.id).limit(300).get();
+   CLS.rows=snap.docs.map(d=>d.data()).filter(r=>r.game===CLS_GAME&&r.k===k).sort((a,b)=>b.best-a.best).slice(0,10);
+  }
+ }catch(e){console.warn(e);CLS.msg=clsT(e&&e.code==='permission-denied'?'sentExpired':'sentFail');}
+ if(ST.screen==='result')render();
+}
+function clsResultHtml(){
+ if(!CLS.on)return'';
+ let h=`<div class="sub" style="margin-top:8px">${esc(CLS.msg)}</div>`;
+ if(CLS.rows&&CLS.rows.length){
+  h+=`<div class="sub" style="margin-top:10px"><b>${esc(clsT('board'))}</b></div><table class="lbt">`;
+  CLS.rows.forEach((r,i)=>{h+=`<tr${r.nick===String(cfg.name||'').trim().slice(0,16)?' style="font-weight:700"':''}><td>${i+1}</td><td>${esc(r.nick)}</td><td>${r.best}</td></tr>`;});
+  h+=`</table>`;
+ }
+ return h;
+}
+document.addEventListener('DOMContentLoaded',clsBoot);
+if(document.readyState!=='loading')clsBoot();
+
 /* ---------- 流程 ---------- */
 function stopSp(){try{spId++;if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
 function toggleRev(){ST.revOpen=!ST.revOpen;render();}
@@ -1721,7 +1794,7 @@ function finishLevel(){
  const n=ST.firstOK,tot=ST.qs.length,stars=n>=tot*0.9?3:n>=tot*0.7?2:n>=tot*0.5?1:0;
  const before=prog[ST.lv]||0;prog[ST.lv]=Math.max(before,stars);saveProg();
  ST.final={score:ST.score,stars,firstOK:n,newUnlock:stars>=1&&ST.lv<LV.length&&(prog[ST.lv+1]===undefined)&&before<1};
- lbSave(cfg.name,ST.lv,ST.score);track('ba_level_end',{lv:ST.lv,score:ST.score,stars});
+ if(CLS.on)clsSubmit();else lbSave(cfg.name,ST.lv,ST.score);track('ba_level_end',{lv:ST.lv,score:ST.score,stars});
  try{window.HGPlays&&HGPlays.end({score:ST.score,name:cfg.name});}catch(e){}
  go('result');
 }
@@ -1778,7 +1851,7 @@ function renderStart(){
  let tiles='';[L1d[0].id,L1d[8].id,L2d[1].id,L2d[8].id].forEach((id,i)=>{tiles+=`<div class="tile" style="--r:${tl[i]}deg">${thumb(id,1)}</div>`;});
  let h=`<div class="home hb">${gearBar()}<div class="strip">${tiles}</div>${titleHTML('b')}${nameHTML()}<h2 class="pick">${t.pick}</h2><div class="tickets">`;
  LV.forEach((l,i)=>{const n=i+1,st=prog[n]||0;h+=`<button class="ticket" onclick="openLevel(${n})"><div class="th">${thumb(ids[i],1)}</div><div class="tm"><div class="t">${lvName(l)}</div>${isZH()?'':`<div class="d">${l[cfg.lang]}</div>`}</div><div class="stars">${starsStr(st)}</div></button>`;});
- return h+`</div><button class="btn block" onclick="openLB()">${t.rank}</button></div>`;
+ return h+`</div>${CLS.on?'':`<button class="btn block" onclick="openLB()">${t.rank}</button>`}</div>`;
 }
 const sm=x=>isZH()?'':`<small>${x}</small>`;
 function renderIntro(){
@@ -1827,11 +1900,11 @@ function renderGame(){
 function renderResult(){
  const t=T(),f=ST.final;
  let h=`<div class="card center"><h2>${t.done}</h2><div class="stars big">${starsStr(f.stars)}</div><div class="sub">${Tp().yourScore}: <b style="color:var(--ink);font-size:22px">${f.score}</b></div><div class="sub">${Tp().firstTry}: ${f.firstOK}/${ST.qs.length}</div>`;
- h+=`</div>`;
+ h+=clsResultHtml()+`</div>`;
  const rev=ST.results.filter(r=>!(r.ok&&r.tries===1));
  h+=`<div class="row"><button class="btn" style="flex:1" onclick="beginLevel()">${t.replay}</button>`;
  if(ST.lv<LV.length)h+=`<button class="btn primary" style="flex:1" onclick="openLevel(${ST.lv+1})">${t.nextLv}</button>`;
- h+=`</div><div class="row" style="margin-top:8px"><button class="btn" style="flex:1" onclick="go('levels')">${t.menu}</button><button class="btn" style="flex:1" onclick="openLB()">${t.rank}</button></div>`;
+ h+=`</div><div class="row" style="margin-top:8px"><button class="btn" style="flex:1" onclick="go('levels')">${t.menu}</button>${CLS.on?'':`<button class="btn" style="flex:1" onclick="openLB()">${t.rank}</button>`}</div>`;
  if(rev.length){   /* 需要複習：預設收起來，點開才看（錯很多題時，按鈕不會被推到下面） */
   h+=`<button class="btn block revbtn ${ST.revOpen?'open':''}" onclick="toggleRev()" aria-expanded="${ST.revOpen?'true':'false'}"><span class="revt">${t.review}</span><span class="revn">${rev.length}</span><span class="revc">${ST.revOpen?'▴':'▾'}</span></button>`;
   if(ST.revOpen){h+=`<div class="card revcard"><div class="revgrid">`;rev.forEach(r=>{h+=`<div class="rev">${pairHTML(r.q.s.id)}<div class="sent">${seqHTML(r.q.s.tok)}。</div>${transHTML(r.q.s)}</div>`;});h+=`</div></div>`;}
