@@ -1586,10 +1586,10 @@ async function lbLoad(){
 
 /* ===== 班級模式（訂閱功能）：連結帶 ?class=班級碼 → 成績回傳給老師，老師在「老師管理中心」產生連結 =====
    跟「跑吧」「墨龍飛天」同一套：成績寫到中央專案 subscription-48d3c 的 class_scores（每位學生×每一關一筆，只留最高分）。
-   CLS_RELEASE=false 時，班級連結一律顯示「維修中」；網址再加 &dev=1 可以先測試。（開放前把它改成 true）
+   要不要開放給老師，由老師管理中心的「遊戲開關」決定（分享區後台設定，把、被預設維修中）；這個檔案不再有自己的開關。
    沒有 ?class= 的時候，這整段什麼都不做，遊戲跟原來一樣。 */
-const CLS_GAME='bei',CLS_RELEASE=false;
-const CLS=(function(){const q=new URLSearchParams(location.search),id=String(q.get('class')||'').toLowerCase();return{on:/^[a-z0-9]{8,32}$/.test(id),id,dev:q.get('dev')==='1',data:null,fatal:'',msg:'',rows:null};})();
+const CLS_GAME='bei';
+const CLS=(function(){const q=new URLSearchParams(location.search),id=String(q.get('class')||'').toLowerCase();return{on:/^[a-z0-9]{8,32}$/.test(id),id,data:null,fatal:'',msg:'',rows:null};})();
 const CLS_TXT={
  maint:['維修中，請稍後再來','维修中，请稍后再来','En mantenimiento, vuelve más tarde','Under maintenance — please come back later'],
  linkBad:['這個連結已失效，請向老師確認','这个链接已失效，请向老师确认','Este enlace ya no es válido; pregunta a tu profesor','This link is no longer valid — please ask your teacher'],
@@ -1619,7 +1619,6 @@ async function clsLoad(){
 }
 function clsBoot(){
  if(!CLS.on||document.getElementById('clsBar'))return;
- if(!CLS_RELEASE&&!CLS.dev){clsShowFatal('maint');return;}
  const b=document.createElement('div');b.id='clsBar';b.style.cssText='background:#e9e0cd;color:#4a4946;font-size:13px;text-align:center;padding:6px 10px';b.textContent=clsT('note');document.body.insertBefore(b,document.body.firstChild);
  clsLoad();
 }
