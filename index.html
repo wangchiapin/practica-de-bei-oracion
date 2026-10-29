@@ -1613,7 +1613,11 @@ function clsShowFatal(key){
 }
 async function clsLoad(){
  if(!CLS.on||CLS.data)return;
- try{const db=await repConn();const s=await db.collection('classes').doc(CLS.id).get();if(!s.exists)CLS.fatal='linkBad';else CLS.data=s.data();}
+ try{const db=await repConn();
+  // 維修開關：老師管理中心的 portalStatus/center-bei。沒有設定文件＝維修中（預設），off:false＝開放；?preview（老師預覽）不受影響；讀不到開關就照常放行。
+  let maint=false;if(!new URLSearchParams(location.search).has('preview')){try{const m=await db.collection('portalStatus').doc('center-bei').get();maint=!m.exists||m.data().off!==false;}catch(e){console.warn('maint check failed',e);}}
+  if(maint)CLS.fatal='maint';
+  else{const s=await db.collection('classes').doc(CLS.id).get();if(!s.exists)CLS.fatal='linkBad';else CLS.data=s.data();}}
  catch(e){console.warn(e);CLS.fatal='linkOff';}
  if(CLS.fatal)clsShowFatal(CLS.fatal);
 }
