@@ -1687,7 +1687,7 @@ function closeSet(){ST.set=false;if(ST.setPaused){ST.setPaused=false;resumeGame(
 function openLevel(n){
  const el=$('nm'),v=(el?el.value:(cfg.name||'')).trim();
  if(!v){const e=$('nerr');if(e)e.textContent=Tp().needName;if(el){el.classList.add('err');el.focus();}return;}
- cfg.name=v;saveCfg();track('ba_start',{lang:cfg.lang,zh:cfg.zh,lv:n});ST.lv=n;beginLevel();
+ cfg.name=v;saveCfg();track('bei_start',{lang:cfg.lang,zh:cfg.zh,lv:n});ST.lv=n;beginLevel();
 }
 function variants(s){const t=s.tok;return BADPOOL[s.id].map(ix=>ix.map(i=>t[i]));}
 function beginLevel(){
@@ -1695,7 +1695,7 @@ function beginLevel(){
  const MIX=['A','L','P','A','L','P','A','L','A','P']; // 把⇒被轉換題(T)先停用,程式保留,之後再決定要不要加回來
  const types=shuffle(MIX.slice(0,pool.length));
  ST.qs=pool.map((s,i)=>({s,type:types[i]}));
- ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('ba_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start('L'+ST.lv,cfg.name);}catch(e){}go('game');
+ ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('bei_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start('L'+ST.lv,cfg.name);}catch(e){}go('game');
 }
 function newCur(){
  const q=ST.qs[ST.qi],s=q.s;
@@ -1737,7 +1737,7 @@ function finishQ(ok){
  }else ST.streak=0;
  c.pts=pts;ST.score+=pts;
  ST.results.push({q:ST.qs[ST.qi],ok,tries:c.tries,hint:c.hint,pts});
- track('ba_answer',{lv:ST.lv,id:ST.qs[ST.qi].s.id,type:ST.qs[ST.qi].type,ok:ok,tries:c.tries});
+ track('bei_answer',{lv:ST.lv,id:ST.qs[ST.qi].s.id,type:ST.qs[ST.qi].type,ok:ok,tries:c.tries});
  speak(curText());render();
 }
 /* ===== 🚩 這題怪怪的：學生回報題目（存到中央專案 game_reports；只有 Ben 在分享區 stats.html「問題回報」看得到）=====
@@ -1796,7 +1796,7 @@ function finishLevel(){
  const n=ST.firstOK,tot=ST.qs.length,stars=n>=tot*0.9?3:n>=tot*0.7?2:n>=tot*0.5?1:0;
  const before=prog[ST.lv]||0;prog[ST.lv]=Math.max(before,stars);saveProg();
  ST.final={score:ST.score,stars,firstOK:n,newUnlock:stars>=1&&ST.lv<LV.length&&(prog[ST.lv+1]===undefined)&&before<1};
- if(CLS.on)clsSubmit();else lbSave(cfg.name,ST.lv,ST.score);track('ba_level_end',{lv:ST.lv,score:ST.score,stars});
+ if(CLS.on)clsSubmit();else lbSave(cfg.name,ST.lv,ST.score);track('bei_level_end',{lv:ST.lv,score:ST.score,stars});
  try{window.HGPlays&&HGPlays.end({score:ST.score,name:cfg.name});}catch(e){}
  go('result');
 }
