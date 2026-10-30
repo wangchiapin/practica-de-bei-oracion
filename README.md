@@ -101,3 +101,12 @@ iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到�
 處理方式（已套用在本遊戲）：`<meta name="viewport">` 設 `maximum-scale=1`，不使用 `viewport-fit=cover`；`<html>` 加 `html{color-scheme:light}`。新增頁面請照這個寫。
 
 - GA 事件名稱（2026-10-29 起）：`bei_start`、`bei_level_start`、`bei_answer`、`bei_level_end`（之前誤用把的 `ba_` 開頭，所以舊資料裡被的事件混在把的統計裡）。
+
+## 測試
+
+`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers python3 tests/test_game.py`（Python + Playwright；擋掉外部網路，用假的 Firebase 和假的語音，不碰真的資料庫）
+
+- 目前 160 項檢查（2026-10-30 建立）。
+- 涵蓋：維修開關（`portalStatus/center-bei`）、`?preview`、`?class=`、四關全開、整關解題、計分、星等門檻（50／70／90%）、設定每個值、公開排行榜、班級成績、題目回報。與「把」是同一套程式的測試。
+- 改了遊戲的計分、設定、排行榜或畫面文字後，推上去之前先跑一次。
+- 驗證方式：另外複製一份遊戲、故意改壞一個地方，測試會出現 FAIL。
