@@ -162,6 +162,8 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 .vsp{width:48px;height:48px;border:1px solid #b3a994;border-radius:10px;background:#fff;font-size:16px;color:var(--ink);cursor:pointer;flex:none}
 .sent .tk{border-bottom:1px dotted #b3a994;cursor:pointer}
 /* 自己寫的句子（文字題）：翻譯框 */
+.pimg{display:block;width:100%;max-width:300px;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:0 auto;background:#fff}
+.opt3 .pimg{max-width:none;border-radius:8px}
 .tbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 14px;text-align:center;font-size:19px;line-height:1.5;margin-bottom:8px}
 @media (max-width:380px){.optS{font-size:18px;padding:4px 8px}}
 /* 2026-10-31 手機版：網頁本身固定成螢幕高度、不整頁捲動；首頁／結果頁由 #app 在裡面捲，題目畫面則由題目卡片在裡面捲
@@ -1466,18 +1468,18 @@ const I={es:{
  sub:'Practica la oración con 被',name:'Tu nombre',ph:'Escribe tu nombre',ui:'Idioma',script:'Caracteres',read:'Lectura',py:'Pinyin',zy:'Zhuyin',off:'Sin lectura',start:'Empezar',pick:'Elige un nivel',needName:'Escribe tu nombre para empezar.',locked:'Bloqueado: consigue 1 estrella en el nivel anterior',rank:'Ranking',teacher:'Centro para profesores',menu:'Menú',
  formula:'Fórmula',who:'Quién',thing:'Cosa',act:'Acción + resultado',begin:'Comenzar',example:'Ejemplo',
  q:'Pregunta',score:'Puntos',combo:'Racha',hint:'Pista (−20)',confirm:'Confirmar',clear:'Borrar',tryAgain:'Casi. ¡Inténtalo otra vez!',correct:'¡Correcto!',wrong:'No es correcto',next:'Siguiente',finish:'Ver resultado',
- qTA:'Lee la traducción y ordena las tarjetas para formar la oración.',qTL:'Escucha y elige la oración correcta.',qTP:'Lee la traducción y elige la oración correcta.',qA:'Mira las imágenes y ordena las tarjetas para formar la oración.',qL:'Escucha y elige la imagen de "después".',qP:'Mira las imágenes y elige la oración correcta.',qT:'Lee la oración con 把 y elige la oración con 被 que significa lo mismo.',before:'Antes',after:'Después',nowL:'Ahora',laterL:'Después',play:'▶ Escuchar',
+ qIA:'Mira la imagen y ordena las tarjetas para formar la oración.',qIL:'Escucha y elige la imagen correcta.',qIP:'Mira la imagen y elige la oración correcta.',qTA:'Lee la traducción y ordena las tarjetas para formar la oración.',qTL:'Escucha y elige la oración correcta.',qTP:'Lee la traducción y elige la oración correcta.',qA:'Mira las imágenes y ordena las tarjetas para formar la oración.',qL:'Escucha y elige la imagen de "después".',qP:'Mira las imágenes y elige la oración correcta.',qT:'Lee la oración con 把 y elige la oración con 被 que significa lo mismo.',before:'Antes',after:'Después',nowL:'Ahora',laterL:'Después',play:'▶ Escuchar',
  done:'¡Nivel terminado!',yourScore:'Puntos',firstTry:'Correctas a la primera',review:'Para repasar',perfect:'¡Todo a la primera!',replay:'Jugar otra vez',nextLv:'Siguiente nivel',
  flag:'Algo raro en esta pregunta',rWhy:'¿Qué pasa?',r_wrong:'La respuesta parece incorrecta',r_image:'La imagen no se ve clara',r_other:'Otra cosa',rNote:'Comentario opcional',rSend:'Enviar',rCancel:'Cancelar',rSent:'¡Gracias! Lo revisaremos.',rFail:'No se pudo enviar. Inténtalo más tarde.',rPick:'Elige una opción.',rSending:'Enviando…',tapHint:'Toca una palabra para ver su significado',lb:'Ranking',player:'Jugador',total:'Total',localNote:'Ranking local (solo este dispositivo).',unlockedMsg:'¡Nivel siguiente desbloqueado!',needStar:'Necesitas al menos 1 estrella para desbloquear el siguiente nivel.',pts:'pts',dict:'Diccionario',close:'Cerrar',slow:'Lento',norm:'Normal',playW:'▶ Palabra por palabra',playS:'▶ Frase completa',vocab:'Mini diccionario',speed:'Velocidad',both:'Ambos',fast:'Rápido',defName:'Jugador',settings:'Ajustes',pause:'Pausa',resume:'Continuar',restart:'Reiniciar',paused:'En pausa',cancel:'Cancelar',ok:'Aceptar',ready:'Listo',confirmRestart:'¿Reiniciar? Este nivel no se guardará.',confirmMenu:'¿Volver al menú? Este nivel no se guardará.'},
 en:{
  sub:'Practice the 被 sentence',name:'Your name',ph:'Type your name',ui:'Language',script:'Characters',read:'Reading',py:'Pinyin',zy:'Zhuyin',off:'Off',start:'Start',pick:'Choose a level',needName:'Type your name to start.',locked:'Locked: earn 1 star on the previous level',rank:'Leaderboard',teacher:'Teacher center',menu:'Menu',
  formula:'Formula',who:'Who',thing:'Thing',act:'Action + result',begin:'Begin',example:'Example',
  q:'Question',score:'Score',combo:'Streak',hint:'Hint (−20)',confirm:'Check',clear:'Clear',tryAgain:'Almost. Try once more!',correct:'Correct!',wrong:'Not quite',next:'Next',finish:'See results',
- qTA:'Read the translation and arrange the cards into the sentence.',qTL:'Listen and choose the correct sentence.',qTP:'Read the translation and choose the correct sentence.',qA:'Look at the pictures and arrange the cards into the sentence.',qL:'Listen and choose the "after" picture.',qP:'Look at the pictures and choose the correct sentence.',qT:'Read the 把 sentence and choose the 被 sentence that means the same.',before:'Before',after:'After',nowL:'Now',laterL:'Later',play:'▶ Listen',
+ qIA:'Look at the picture and arrange the cards into the sentence.',qIL:'Listen and choose the correct picture.',qIP:'Look at the picture and choose the correct sentence.',qTA:'Read the translation and arrange the cards into the sentence.',qTL:'Listen and choose the correct sentence.',qTP:'Read the translation and choose the correct sentence.',qA:'Look at the pictures and arrange the cards into the sentence.',qL:'Listen and choose the "after" picture.',qP:'Look at the pictures and choose the correct sentence.',qT:'Read the 把 sentence and choose the 被 sentence that means the same.',before:'Before',after:'After',nowL:'Now',laterL:'Later',play:'▶ Listen',
  done:'Level complete!',yourScore:'Score',firstTry:'Right on the first try',review:'To review',perfect:'All right on the first try!',replay:'Play again',nextLv:'Next level',
  flag:"Something's off here",rWhy:"What's wrong?",r_wrong:'The answer looks wrong',r_image:"The picture isn't clear",r_other:'Other',rNote:'Optional note',rSend:'Send',rCancel:'Cancel',rSent:'Thanks! We will check it.',rFail:"Couldn't send. Please try again later.",rPick:'Please choose one.',rSending:'Sending…',tapHint:'Tap a word to see its meaning',lb:'Leaderboard',player:'Player',total:'Total',localNote:'Local leaderboard (this device only).',unlockedMsg:'Next level unlocked!',needStar:'You need at least 1 star to unlock the next level.',pts:'pts',dict:'Dictionary',close:'Close',slow:'Slow',norm:'Normal',playW:'▶ Word by word',playS:'▶ Full sentence',vocab:'Mini dictionary',speed:'Speed',both:'Both',fast:'Fast',defName:'Player',settings:'Settings',pause:'Pause',resume:'Resume',restart:'Restart',paused:'Paused',cancel:'Cancel',ok:'OK',ready:'Done',confirmRestart:'Restart? This level will not be saved.',confirmMenu:'Back to the menu? This level will not be saved.'},
- zh:{flag:'這題怪怪的',rWhy:'哪裡怪怪的？',r_wrong:'答案好像不對',r_image:'圖看不清楚',r_other:'其他',rNote:'留言（可不填）',rSend:'送出',rCancel:'取消',rSent:'謝謝！我們會檢查。',rFail:'送出失敗，請稍後再試。',rPick:'請選一個原因。',rSending:'送出中…',tapHint:'點一下字，看意思',sub:'練習「被」字句',name:'你的名字',ph:'請輸入名字',ui:'語言',script:'字體',read:'讀音',speed:'語速',py:'拼音',zy:'注音',both:'兩個都顯示',off:'不顯示',start:'開始',pick:'選一個關卡',needName:'請先輸入名字，再選關卡。',locked:'未解鎖：上一關要拿到 1 顆星',rank:'排行榜',teacher:'老師管理中心',menu:'選單',formula:'公式',who:'誰',thing:'東西',act:'動作＋結果',begin:'開始',example:'例句',q:'題目',score:'分數',combo:'連續答對',hint:'提示（−20）',confirm:'確認',clear:'清除',tryAgain:'差一點，再試一次！',correct:'答對了！',wrong:'不對',next:'下一題',finish:'看結果',qTA:'看翻譯，把卡片排成句子。',qTL:'聽句子，選出正確的句子。',qTP:'看翻譯，選出正確的句子。',qA:'看圖，把卡片排成句子。',qL:'聽一聽，選出「之後」的圖。',qP:'看圖，選出正確的句子。',qT:'看「把」句，選出意思一樣的「被」句。',before:'之前',after:'之後',nowL:'現在',laterL:'之後',play:'▶ 聽',done:'關卡完成！',yourScore:'分數',firstTry:'一次就答對',review:'需要複習',perfect:'全部一次就答對！',replay:'再玩一次',nextLv:'下一關',lb:'排行榜',player:'玩家',total:'總分',localNote:'本機排行榜（只存在這個裝置）',unlockedMsg:'下一關已解鎖！',needStar:'至少要 1 顆星才能解鎖下一關。',pts:'分',dict:'字典',close:'關閉',slow:'慢',norm:'正常',fast:'快',playW:'▶ 逐詞聽',playS:'▶ 整句聽',vocab:'小字典',defName:'玩家',settings:'設定',pause:'暫停',resume:'繼續',restart:'重新開始',paused:'已暫停',cancel:'取消',ok:'確定',ready:'完成',confirmRestart:'確定要重新開始嗎？本關成績不會記錄。',confirmMenu:'確定要回選單嗎？本關成績不會記錄。'},
- zhs:{flag:'这题怪怪的',rWhy:'哪里怪怪的？',r_wrong:'答案好像不对',r_image:'图看不清楚',r_other:'其他',rNote:'留言（可不填）',rSend:'送出',rCancel:'取消',rSent:'谢谢！我们会检查。',rFail:'送出失败，请稍后再试。',rPick:'请选一个原因。',rSending:'送出中…',tapHint:'点一下字，看意思',sub:'练习「被」字句',name:'你的名字',ph:'请输入名字',ui:'语言',script:'字体',read:'读音',speed:'语速',py:'拼音',zy:'注音',both:'两个都显示',off:'不显示',start:'开始',pick:'选一个关卡',needName:'请先输入名字，再选关卡。',locked:'未解锁：上一关要拿到 1 颗星',rank:'排行榜',teacher:'老师管理中心',menu:'选单',formula:'公式',who:'谁',thing:'东西',act:'动作＋结果',begin:'开始',example:'例句',q:'题目',score:'分数',combo:'连续答对',hint:'提示（−20）',confirm:'确认',clear:'清除',tryAgain:'差一点，再试一次！',correct:'答对了！',wrong:'不对',next:'下一题',finish:'看结果',qTA:'看翻译，把卡片排成句子。',qTL:'听句子，选出正确的句子。',qTP:'看翻译，选出正确的句子。',qA:'看图，把卡片排成句子。',qL:'听一听，选出「之后」的图。',qP:'看图，选出正确的句子。',qT:'看「把」句，选出意思一样的「被」句。',before:'之前',after:'之后',nowL:'现在',laterL:'之后',play:'▶ 听',done:'关卡完成！',yourScore:'分数',firstTry:'一次就答对',review:'需要复习',perfect:'全部一次就答对！',replay:'再玩一次',nextLv:'下一关',lb:'排行榜',player:'玩家',total:'总分',localNote:'本机排行榜（只存在这个装置）',unlockedMsg:'下一关已解锁！',needStar:'至少要 1 颗星才能解锁下一关。',pts:'分',dict:'字典',close:'关闭',slow:'慢',norm:'正常',fast:'快',playW:'▶ 逐词听',playS:'▶ 整句听',vocab:'小字典',defName:'玩家',settings:'设定',pause:'暂停',resume:'继续',restart:'重新开始',paused:'已暂停',cancel:'取消',ok:'确定',ready:'完成',confirmRestart:'确定要重新开始吗？本关成绩不会记录。',confirmMenu:'确定要回选单吗？本关成绩不会记录。'}};
+ zh:{flag:'這題怪怪的',rWhy:'哪裡怪怪的？',r_wrong:'答案好像不對',r_image:'圖看不清楚',r_other:'其他',rNote:'留言（可不填）',rSend:'送出',rCancel:'取消',rSent:'謝謝！我們會檢查。',rFail:'送出失敗，請稍後再試。',rPick:'請選一個原因。',rSending:'送出中…',tapHint:'點一下字，看意思',sub:'練習「被」字句',name:'你的名字',ph:'請輸入名字',ui:'語言',script:'字體',read:'讀音',speed:'語速',py:'拼音',zy:'注音',both:'兩個都顯示',off:'不顯示',start:'開始',pick:'選一個關卡',needName:'請先輸入名字，再選關卡。',locked:'未解鎖：上一關要拿到 1 顆星',rank:'排行榜',teacher:'老師管理中心',menu:'選單',formula:'公式',who:'誰',thing:'東西',act:'動作＋結果',begin:'開始',example:'例句',q:'題目',score:'分數',combo:'連續答對',hint:'提示（−20）',confirm:'確認',clear:'清除',tryAgain:'差一點，再試一次！',correct:'答對了！',wrong:'不對',next:'下一題',finish:'看結果',qIA:'看圖，把卡片排成句子。',qIL:'聽句子，選出正確的圖。',qIP:'看圖，選出正確的句子。',qTA:'看翻譯，把卡片排成句子。',qTL:'聽句子，選出正確的句子。',qTP:'看翻譯，選出正確的句子。',qA:'看圖，把卡片排成句子。',qL:'聽一聽，選出「之後」的圖。',qP:'看圖，選出正確的句子。',qT:'看「把」句，選出意思一樣的「被」句。',before:'之前',after:'之後',nowL:'現在',laterL:'之後',play:'▶ 聽',done:'關卡完成！',yourScore:'分數',firstTry:'一次就答對',review:'需要複習',perfect:'全部一次就答對！',replay:'再玩一次',nextLv:'下一關',lb:'排行榜',player:'玩家',total:'總分',localNote:'本機排行榜（只存在這個裝置）',unlockedMsg:'下一關已解鎖！',needStar:'至少要 1 顆星才能解鎖下一關。',pts:'分',dict:'字典',close:'關閉',slow:'慢',norm:'正常',fast:'快',playW:'▶ 逐詞聽',playS:'▶ 整句聽',vocab:'小字典',defName:'玩家',settings:'設定',pause:'暫停',resume:'繼續',restart:'重新開始',paused:'已暫停',cancel:'取消',ok:'確定',ready:'完成',confirmRestart:'確定要重新開始嗎？本關成績不會記錄。',confirmMenu:'確定要回選單嗎？本關成績不會記錄。'},
+ zhs:{flag:'这题怪怪的',rWhy:'哪里怪怪的？',r_wrong:'答案好像不对',r_image:'图看不清楚',r_other:'其他',rNote:'留言（可不填）',rSend:'送出',rCancel:'取消',rSent:'谢谢！我们会检查。',rFail:'送出失败，请稍后再试。',rPick:'请选一个原因。',rSending:'送出中…',tapHint:'点一下字，看意思',sub:'练习「被」字句',name:'你的名字',ph:'请输入名字',ui:'语言',script:'字体',read:'读音',speed:'语速',py:'拼音',zy:'注音',both:'两个都显示',off:'不显示',start:'开始',pick:'选一个关卡',needName:'请先输入名字，再选关卡。',locked:'未解锁：上一关要拿到 1 颗星',rank:'排行榜',teacher:'老师管理中心',menu:'选单',formula:'公式',who:'谁',thing:'东西',act:'动作＋结果',begin:'开始',example:'例句',q:'题目',score:'分数',combo:'连续答对',hint:'提示（−20）',confirm:'确认',clear:'清除',tryAgain:'差一点，再试一次！',correct:'答对了！',wrong:'不对',next:'下一题',finish:'看结果',qIA:'看图，把卡片排成句子。',qIL:'听句子，选出正确的图。',qIP:'看图，选出正确的句子。',qTA:'看翻译，把卡片排成句子。',qTL:'听句子，选出正确的句子。',qTP:'看翻译，选出正确的句子。',qA:'看图，把卡片排成句子。',qL:'听一听，选出「之后」的图。',qP:'看图，选出正确的句子。',qT:'看「把」句，选出意思一样的「被」句。',before:'之前',after:'之后',nowL:'现在',laterL:'之后',play:'▶ 听',done:'关卡完成！',yourScore:'分数',firstTry:'一次就答对',review:'需要复习',perfect:'全部一次就答对！',replay:'再玩一次',nextLv:'下一关',lb:'排行榜',player:'玩家',total:'总分',localNote:'本机排行榜（只存在这个装置）',unlockedMsg:'下一关已解锁！',needStar:'至少要 1 颗星才能解锁下一关。',pts:'分',dict:'字典',close:'关闭',slow:'慢',norm:'正常',fast:'快',playW:'▶ 逐词听',playS:'▶ 整句听',vocab:'小字典',defName:'玩家',settings:'设定',pause:'暂停',resume:'继续',restart:'重新开始',paused:'已暂停',cancel:'取消',ok:'确定',ready:'完成',confirmRestart:'确定要重新开始吗？本关成绩不会记录。',confirmMenu:'确定要回选单吗？本关成绩不会记录。'}};
 
 /* ---------- 狀態 ---------- */
 /* 共用設定：和其他漢字遊戲同一把 localStorage 鑰匙 hanziGames.settings（格式見 README） */
@@ -1688,7 +1690,26 @@ function custParse(c,i){
  if(!c||!Array.isArray(c.tk)||!c.tk.length||c.tk.length>8)return null;
  const tok=c.tk.map(x=>{const a=cleanS(x,80).split('|');return{tc:a[0]||'',sc:a[1]||a[0]||'',py:a[2]||'',zy:a[3]||''};});
  if(tok.some(t=>!t.tc))return null;
- return{id:'c'+(i+1),lv:0,custom:true,es:cleanS(c.es,200),en:cleanS(c.en,200),tok};
+ return{id:'c'+(i+1),lv:0,custom:true,es:cleanS(c.es,200),en:cleanS(c.en,200),tok,im:/^[12][a-z0-9]{3,12}$/.test(String(c.im||''))?String(c.im):'',img:''};
+}
+/* 老師加的圖：存在 shared_babimgs/{句庫碼}_{1|2}（每份最多 10 張，代號前面的數字就是在哪一份）。
+   用句庫文件的更新時間當版本，裝置記住圖片（localStorage），沒更新就不再下載，省資料庫流量；讀不到圖就當沒有圖，照出文字題。 */
+async function custImgs(d){
+ const need=new Set(BANK.cust.filter(x=>x.im).map(x=>x.im.charAt(0)));
+ if(!need.size)return;
+ const u=d&&d.updatedAt,ver=JSON.stringify(u&&u.seconds!=null?[u.seconds,u.nanoseconds]:(u==null?0:u)),key='babimg_'+BANK.id;
+ let map=null;
+ try{const c=JSON.parse(localStorage.getItem(key)||'null');if(c&&c.v===ver&&c.m)map=c.m;}catch(e){}
+ if(!map){
+  map={};
+  try{
+   const db=await fb();
+   await Promise.all(Array.from(need).map(async n=>{const sn=await db.collection('shared_babimgs').doc(BANK.id+'_'+n).get();if(sn.exists){const m=(sn.data()||{}).imgs||{};for(const k in m)map[k]=m[k];}}));
+   try{localStorage.setItem(key,JSON.stringify({v:ver,m:map}));}catch(e){}
+  }catch(e){console.warn('imgs',e);map={};}
+ }
+ const okImg=/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
+ BANK.cust.forEach(x=>{const v=x.im?map[x.im.slice(1)]:'';x.img=(typeof v==='string'&&v.length<120000&&okImg.test(v))?v:'';});
 }
 const custTr=s=>cfg.lang==='en'?(s.en||s.es):(s.es||s.en);
 function custWrong(s){
@@ -1706,7 +1727,7 @@ async function bankLoad(){
   if(!BANK.fatal){
    const s=await db.collection('shared_babanks').doc(BANK.id).get(),d=s.exists?s.data():null;
    if(!d||d.game!==CLS_GAME||!Array.isArray(d.ids))BANK.fatal='linkBad';
-   else{const have=new Set(DATA.map(x=>x.id));BANK.ids=d.ids.filter(i=>have.has(i));BANK.name=String(d.name||'').slice(0,40);BANK.set=new Set(BANK.ids);BANK.cust=(Array.isArray(d.custom)?d.custom:[]).slice(0,80).map(custParse).filter(Boolean);BANK.cust.forEach(x=>x.tok.forEach(t=>{if(!TOKMAP[t.tc])TOKMAP[t.tc]=t;}));if(!BANK.ids.length&&!BANK.cust.length)BANK.fatal='linkBad';}
+   else{const have=new Set(DATA.map(x=>x.id));BANK.ids=d.ids.filter(i=>have.has(i));BANK.name=String(d.name||'').slice(0,40);BANK.set=new Set(BANK.ids);BANK.cust=(Array.isArray(d.custom)?d.custom:[]).slice(0,80).map(custParse).filter(Boolean);BANK.cust.forEach(x=>x.tok.forEach(t=>{if(!TOKMAP[t.tc])TOKMAP[t.tc]=t;}));await custImgs(d);if(!BANK.ids.length&&!BANK.cust.length)BANK.fatal='linkBad';}
   }
  }catch(e){console.warn(e);BANK.fatal='linkOff';}
  BANK.loading=false;
@@ -1764,7 +1785,7 @@ function newCur(){
  const q=ST.qs[ST.qi],s=q.s;
  ST.look=null;ST.vocab=false;ST.rep=null;const c={tries:0,hint:false,done:false,ok:null,pts:0,elapsed:0,t0:Date.now(),msg:'',locked:[],picked:-1,picks:[]};
 
- if(s.custom&&q.type!=='A'){const wrong=custWrong(s);c.opts=shuffle([{seq:s.tok,ok:true},...wrong.map(w=>({seq:w,ok:false}))]);if(q.type==='L'){c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}ST.cur=c;return;}
+ if(s.custom&&q.type!=='A'){if(q.type==='L'&&s.img&&BANK.cust.filter(x=>x.img).length>=3){const oth=shuffle(BANK.cust.filter(x=>x.img&&x!==s)).slice(0,2);c.pic=true;c.opts=shuffle([{img:s.img,ok:true},...oth.map(o=>({img:o.img,ok:false}))]);c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);ST.cur=c;return;}const wrong=custWrong(s);c.opts=shuffle([{seq:s.tok,ok:true},...wrong.map(w=>({seq:w,ok:false}))]);if(q.type==='L'){c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}ST.cur=c;return;}
  if(q.type==='A'){let tray=shuffle(s.tok.map((t,i)=>Object.assign({i},t)));let n=0;while(tray.every((t,i)=>t.i===i)&&n++<10)tray=shuffle(tray);c.tray=tray;c.placed=[];}
  else if(q.type==='L'){const others=pickOthers(s);c.opts=shuffle([s,...others]).map(d=>({id:d.id,ok:d.id===s.id}));c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}
  else if(q.type==='T'){const bad=[[2,1,0,3,4],[0,2,1,3,4]].map(ix=>ix.map(i=>s.tok[i]));c.opts=shuffle([{seq:s.tok,ok:true},...bad.map(w=>({seq:w,ok:false}))]);}
@@ -1786,7 +1807,7 @@ function confirmA(){
 }
 function pickOpt(k){
  const c=ST.cur;if(c.done||c.locked.includes(k))return;
- if(c.tries===0)c.elapsed=(Date.now()-c.t0)/1000;c.tries++;c.picked=k;c.picks.push(ST.qs[ST.qi].type==='L'&&!ST.qs[ST.qi].s.custom?k:tcText(c.opts[k].seq));
+ if(c.tries===0)c.elapsed=(Date.now()-c.t0)/1000;c.tries++;c.picked=k;c.picks.push(ST.qs[ST.qi].type==='L'&&(!ST.qs[ST.qi].s.custom||c.pic)?k:tcText(c.opts[k].seq));
  if(c.opts[k].ok)return finishQ(true);
  if(c.tries>=2){return finishQ(false);}
  c.locked.push(k);c.msg='retry';render();shakeFx();
@@ -1947,9 +1968,12 @@ function renderGame(){
  const t=T(),q=ST.qs[ST.qi],c=ST.cur,s=q.s,last=ST.qi===ST.qs.length-1;
  if(ST.paused)return topbar()+`<div class="card center"><h2>${t.paused}</h2><div class="pcol"><button class="btn primary" onclick="togglePause()">▶ ${t.resume}</button><button class="btn" onclick="askConfirm('restart')">↻ ${t.restart}</button><button class="btn" onclick="askConfirm('menu')">⌂ ${t.menu}</button></div></div>`;
  const vOK=!c.done&&(q.type!=='L'||c.hint);
- let h=topbar()+`<div class="card qcard"><div class="qtop"><div class="qlabel">${s.custom?(q.type==='A'?t.qTA:q.type==='L'?t.qTL:t.qTP):(q.type==='A'?t.qA:q.type==='L'?t.qL:q.type==='T'?t.qT:t.qP)}</div>${vOK?`<button class="btn ghost dictb" onclick="openVocab()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v15H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 20.5V5.5"/><path d="M8.5 8.5h6M8.5 12h4"/></svg>${t.vocab}</button>`:''}</div><div class="qgrid ${q.type==='T'?'P':q.type}">`;
+ let h=topbar()+`<div class="card qcard"><div class="qtop"><div class="qlabel">${t[(s.custom?(s.img&&!(q.type==='L'&&!c.pic)?'qI':'qT'):'q')+q.type]}</div>${vOK?`<button class="btn ghost dictb" onclick="openVocab()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v15H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 20.5V5.5"/><path d="M8.5 8.5h6M8.5 12h4"/></svg>${t.vocab}</button>`:''}</div><div class="qgrid ${q.type==='T'?'P':q.type}">`;
  if(s.custom){
-  h+=q.type==='L'?`<div class="pics L"><div class="row" style="justify-content:center"><button class="btn" onclick="playL('s')">${t.playS}</button><button class="btn" onclick="playL('w')">${t.playW}</button></div></div>`:`<div class="pics"><div class="tbox">${esc(custTr(s))}</div></div>`;
+  if(q.type==='L'){h+=`<div class="pics L"><div class="row" style="justify-content:center"><button class="btn" onclick="playL('s')">${t.playS}</button><button class="btn" onclick="playL('w')">${t.playW}</button></div>`;
+   if(c.pic){h+=`<div class="opts3">`;c.opts.forEach((o,k)=>{const cls=c.done?(o.ok?'ok':(c.picked===k?'bad':'')):(c.locked.includes(k)?'bad':'');h+=`<button class="opt3 ${cls}" onclick="pickOpt(${k})"><img class="pimg" alt="" src="${o.img}"></button>`;});h+=`</div>`;}
+   h+=`</div>`;}
+  else h+=`<div class="pics">${s.img?`<img class="pimg" alt="" src="${s.img}">`:`<div class="tbox">${esc(custTr(s))}</div>`}</div>`;
  }else if(q.type==='L'){
   h+=`<div class="pics L"><div class="row" style="justify-content:center"><button class="btn" onclick="playL('s')">${t.playS}</button><button class="btn" onclick="playL('w')">${t.playW}</button></div><div class="opts3">`;
   c.opts.forEach((o,k)=>{const cls=c.done?(o.ok?'ok':(c.picked===k?'bad':'')):(c.locked.includes(k)?'bad':'');h+=`<button class="opt3 ${cls}" onclick="pickOpt(${k})">${scene(o.id)[1]}</button>`;});
@@ -1962,13 +1986,13 @@ function renderGame(){
   h+=`<div class="row stick"><button class="btn primary" onclick="confirmA()" ${c.placed.length===s.tok.length?'':'disabled'}>${t.confirm}</button><button class="btn ghost" onclick="clearTok()">${t.clear}</button></div>`;
  }
  if(q.type==='T')h+=`<div class="tlab">把 ⇒ 被</div><div class="sent tsrc">${seqHTML(s.tokBa)}。</div>`;
- if((q.type==='P'||q.type==='T'||(q.type==='L'&&s.custom))&&!(c.done&&c.opts[c.picked]&&c.opts[c.picked].ok)){   /* 答對後把選項拿掉，只留正確句子，跟排句子題一致 */
+ if((q.type==='P'||q.type==='T'||(q.type==='L'&&s.custom&&!c.pic))&&!(c.done&&c.opts[c.picked]&&c.opts[c.picked].ok)){   /* 答對後把選項拿掉，只留正確句子，跟排句子題一致 */
   c.opts.forEach((o,k)=>{const cls=c.done?(o.ok?'ok':(c.picked===k?'bad':'')):(c.locked.includes(k)?'bad':'');h+=`<button class="optS ${cls}" onclick="pickOpt(${k})"><span>${seqHTML(o.seq)}。</span></button>`;});
  }
  if(!c.done){
   if(c.msg==='retry')h+=`<div class="fb bad">${t.tryAgain}</div>`;
   if(c.hint){if(q.type==='L')h+=`<div class="sent">${seqHTML(s.tok)}。</div>`;h+=transHTML(s);}
-  const hintOK=s.custom?q.type==='L':(!isZH()||q.type==='L');   /* 純中文模式沒有翻譯可提示，只有聽音題的「顯示句子」提示保留 */
+  const hintOK=s.custom?(q.type==='L'||!!s.img):(!isZH()||q.type==='L');   /* 純中文模式沒有翻譯可提示，只有聽音題的「顯示句子」提示保留 */
   h+=`<div class="row bot">${c.hint||!hintOK?'':`<button class="btn ghost" onclick="useHint()">${t.hint}</button>`}</div>`;
  }else{
   h+=`<div class="fb ${c.ok?'ok':'bad'}"><b>${c.ok?Tp().correct:Tp().wrong}</b> · +${c.pts} ${cfg.lang==='zh'?Tp().pts:'pts'}${c.ok&&c.tries===1&&ST.streak>=2?' · '+Tp().combo+' ×'+mult():''}</div>`;
@@ -1989,7 +2013,7 @@ function renderResult(){
  h+=`</div><div class="row" style="margin-top:8px"><button class="btn" style="flex:1" onclick="go('levels')">${t.menu}</button>${CLS.on||BANK.on?'':`<button class="btn" style="flex:1" onclick="openLB()">${t.rank}</button>`}</div>`;
  if(rev.length){   /* 需要複習：預設收起來，點開才看（錯很多題時，按鈕不會被推到下面） */
   h+=`<button class="btn block revbtn ${ST.revOpen?'open':''}" onclick="toggleRev()" aria-expanded="${ST.revOpen?'true':'false'}"><span class="revt">${t.review}</span><span class="revn">${rev.length}</span><span class="revc">${ST.revOpen?'▴':'▾'}</span></button>`;
-  if(ST.revOpen){h+=`<div class="card revcard"><div class="revgrid">`;rev.forEach(r=>{h+=`<div class="rev">${r.q.s.custom?'':pairHTML(r.q.s.id)}<div class="sent">${seqHTML(r.q.s.tok)}。</div>${transHTML(r.q.s)}</div>`;});h+=`</div></div>`;}
+  if(ST.revOpen){h+=`<div class="card revcard"><div class="revgrid">`;rev.forEach(r=>{h+=`<div class="rev">${r.q.s.custom?(r.q.s.img?`<div class="pics"><img class="pimg" alt="" src="${r.q.s.img}"></div>`:''):pairHTML(r.q.s.id)}<div class="sent">${seqHTML(r.q.s.tok)}。</div>${transHTML(r.q.s)}</div>`;});h+=`</div></div>`;}
  }
  return h;
 }

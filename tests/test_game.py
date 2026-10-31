@@ -540,6 +540,82 @@ with sync_playwright() as p:
     R.check(pg.locator('#clsFatal').count() == 1, '沒有任何有效句子（含自訂）：顯示失效畫面')
     b.close()
 
+# ===== 老師加的圖（shared_babimgs；每份最多 10 張，句子的 im = 1或2 + 圖片代號）=====
+JPG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='
+def img_entries(n, with_img):
+    es = cust_entries(n)
+    for i, e in enumerate(es):
+        if i < with_img: e['im'] = '1ab%d00xyz' % i
+    return es
+def img_db(n, with_img, imgs=None, ver=1):
+    d = cust_db([], img_entries(n, with_img))
+    d['shared_babanks/' + SID]['updatedAt'] = ver
+    m = imgs if imgs is not None else {'ab%d00xyz' % i: JPG for i in range(with_img)}
+    if m: d['shared_babimgs/' + SID + '_1'] = {'owner': 'T1', 'imgs': m, 'updatedAt': ver}
+    return d
+def force(pg, idx, typ):
+    pg.evaluate("(a)=>{ST.qs=[{s:BANK.cust[a[0]],type:a[1]}];ST.qi=0;ST.screen='game';newCur();render();}", [idx, typ]); pg.wait_for_timeout(150)
+with sync_playwright() as p:
+    # 5 句有圖（≥3）：看圖排卡片、看圖選句、聽句選圖
+    b, pg, errs = page(p, '?bank=' + SID, db=img_db(10, 5))
+    R.check(pg.evaluate("BANK.cust.filter(x=>x.img).length") == 5, '老師加的圖：5 句讀到圖片')
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    force(pg, 0, 'A')
+    R.check(pg.locator('.pimg').count() == 1 and pg.locator('.tbox').count() == 0 and pg.locator('.pair').count() == 0, '有圖的句子（排卡片）：顯示老師的圖，不顯示翻譯框')
+    R.check('看圖' in pg.inner_text('.qlabel'), '排卡片題幹：看圖')
+    R.check(pg.locator('button:has-text("提示"), button:has-text("Pista"), button:has-text("Hint")').count() >= 1, '有圖的句子：可以按提示看翻譯')
+    solve_one(pg, True); R.check(pg.evaluate("ST.cur.done && ST.cur.ok"), '看圖排卡片答對')
+    force(pg, 1, 'P')
+    R.check(pg.locator('.pimg').count() == 1 and pg.locator('button.optS').count() == 3 and '看圖' in pg.inner_text('.qlabel'), '看圖選句子：一張圖、三個句子')
+    solve_one(pg, False); solve_one(pg, True); R.check(pg.evaluate("ST.cur.done && ST.cur.ok && ST.cur.tries==2"), '看圖選句子：答錯再答對')
+    force(pg, 2, 'L')
+    R.check(pg.evaluate("ST.cur.pic") is True and pg.locator('.opt3 .pimg').count() == 3 and pg.locator('button.optS').count() == 0, '聽句選圖：三張圖可選')
+    R.check(pg.evaluate("new Set(ST.cur.opts.map(o=>o.img)).size>=1 && ST.cur.opts.filter(o=>o.ok).length===1"), '聽句選圖：只有一個正確')
+    solve_one(pg, False); R.check(pg.evaluate("ST.cur.locked.length")==1, '選錯的圖被標記')
+    solve_one(pg, True); R.check(pg.evaluate("ST.cur.done && ST.cur.ok"), '聽句選圖答對')
+    R.check(pg.locator('.repbtn').count() == 0, '有圖的句子也沒有「這題怪怪的」')
+    force(pg, 7, 'L')   # 沒圖的句子：還是文字題
+    R.check(pg.evaluate("!ST.cur.pic") and pg.locator('button.optS').count() == 3 and pg.locator('.pimg').count() == 0, '沒圖的句子：照樣出文字聽句題')
+    # 完整玩一輪 10 題
+    pg.evaluate("beginLevel()"); pg.wait_for_timeout(300)
+    for i in range(10):
+        solve_one(pg, False); solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(400)
+    R.check(pg.evaluate("ST.screen") == 'result', '有圖＋沒圖混合句庫：玩完一輪')
+    pg.evaluate("ST.revOpen=true;render()"); pg.wait_for_timeout(200)
+    R.check(pg.locator('.revgrid .pimg').count() >= 1, '結果頁回顧：有圖的句子顯示老師的圖')
+    # 裝置快取：同一版本不再下載；版本變了才重讀
+    pg.evaluate("delete window.__db['shared_babimgs/%s_1']" % SID)
+    n1 = pg.evaluate("(async()=>{BANK.cust.forEach(x=>x.img='');await custImgs({updatedAt:1});return BANK.cust.filter(x=>x.img).length})()")
+    R.check(n1 == 5, '裝置有記住圖片：版本沒變，圖片文件不在了也還看得到')
+    n2 = pg.evaluate("(async()=>{BANK.cust.forEach(x=>x.img='');await custImgs({updatedAt:2});return BANK.cust.filter(x=>x.img).length})()")
+    R.check(n2 == 0, '句庫更新後（版本變了）：重新去讀，讀不到就當沒有圖')
+    R.check(not errs, '有圖句庫沒有網頁錯誤 %s' % errs)
+    b.close()
+    # 只有 2 張圖：聽句選圖湊不到 3 張 → 改出文字聽句題
+    b, pg, errs = page(p, '?bank=' + SID, db=img_db(10, 2))
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    force(pg, 0, 'L')
+    R.check(pg.evaluate("!ST.cur.pic") and pg.locator('button.optS').count() == 3 and pg.locator('.opt3').count() == 0, '少於 3 張圖：聽句題改出文字選項')
+    force(pg, 0, 'A'); R.check(pg.locator('.pimg').count() == 1, '少於 3 張圖：排卡片仍然顯示圖')
+    R.check(not errs, '少圖沒有網頁錯誤 %s' % errs)
+    b.close()
+    # 壞圖／被亂放的圖：不是 JPEG 或有 script → 當沒有圖；第 2 份讀不到 → 該句沒有圖
+    bad = {'ab000xyz': 'javascript:alert(1)', 'ab100xyz': 'data:image/svg+xml;base64,PHN2Zz4=', 'ab200xyz': JPG + '"onerror="alert(1)'}
+    b, pg, errs = page(p, '?bank=' + SID, db=img_db(10, 3, imgs=bad))
+    R.check(pg.evaluate("BANK.cust.filter(x=>x.img).length") == 0, '不是 JPEG 的圖、夾帶程式的圖：一律不用')
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(300)
+    R.check(pg.evaluate("ST.screen") == 'result' and not errs, '圖壞掉：全部改出文字題，照常玩完 %s' % errs)
+    b.close()
+    d2 = img_db(10, 3, imgs={})
+    for e in d2['shared_babanks/' + SID]['custom'][:3]: e['im'] = '2' + e['im'][1:]
+    b, pg, errs = page(p, '?bank=' + SID, db=d2)
+    R.check(pg.evaluate("BANK.cust.filter(x=>x.img).length") == 0 and not errs, '第 2 份圖片文件不存在：沒有圖，不報錯 %s' % errs)
+    b.close()
+
 # ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
 import subprocess
 _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)
