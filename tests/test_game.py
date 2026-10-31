@@ -364,4 +364,104 @@ with sync_playwright() as p:
             R.check(m['copyBottom'] <= m['win'] + 1, f'{scr}：版權小字在畫面內（{m["copyBottom"]:.0f} / {m["win"]}）')
         b.close()
 
+# ===== 自訂句庫模式（?bank=句庫碼）=====
+SID = 'bank0001abcd'
+def bank_db(ids, game=None, name='第三週複習', maint_open=True, cls=True):
+    d = {'shared_babanks/' + SID: {'owner': 'T1', 'game': game or GAME, 'name': name, 'ids': ids, 'updatedAt': 1}}
+    if maint_open: d['portalStatus/center-' + GAME] = {'off': False}
+    if cls: d['classes/' + CID] = {'owner': 'T1', 'showBoard': False}
+    return d
+with sync_playwright() as p:
+    IDS = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'sentences.json'), encoding='utf-8'))['sentences']
+    BIDS = [x['id'] for x in IDS if x['lv'] == 2][:6] + [x['id'] for x in IDS if x['lv'] == 1][:6]   # 12 句，跨兩關
+    # 首頁
+    b, pg, errs = page(p, '?bank=' + SID, db=bank_db(BIDS, cls=False))
+    R.check(pg.locator('#clsFatal').count() == 0, '句庫模式：正常打開（沒有錯誤畫面）')
+    R.check(pg.locator('button.ticket').count() == 1 and pg.locator('#bankStart').count() == 1, '句庫模式首頁：只有一張「開始」卡片，沒有三～四張關卡卡')
+    R.check('第三週複習' in pg.inner_text('#bankName'), '開始卡片上方顯示句庫名稱')
+    R.check(pg.locator('#nm').count() == 1, '首頁有名字欄')
+    R.check('openLB()' not in pg.inner_html('#app') and pg.locator('#teacherLink').count() == 0, '句庫模式首頁：沒有排行榜、沒有老師入口')
+    pg.locator('#bankStart').click(); pg.wait_for_timeout(300)
+    R.check(pg.evaluate("ST.screen") == 'start' and pg.evaluate("document.getElementById('nerr').textContent.length>0"), '沒填暱稱：留在首頁並提示')
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(500)
+    R.check(pg.evaluate("ST.screen") == 'game' and pg.evaluate("ST.qs.length") == 10, '按開始：進入遊戲，共 10 題')
+    R.check(pg.evaluate("ST.qs.every(q=>%s.includes(q.s.id))" % json.dumps(BIDS)), '10 題全部來自句庫挑的句子')
+    R.check(pg.evaluate("new Set(ST.qs.map(q=>q.s.id)).size") == 10, '10 題沒有重複')
+    R.check(pg.evaluate("ST.qs.map(q=>q.type).every(t=>'ALP'.includes(t))"), '題型只有排卡片／聽選圖／看圖選句')
+    R.check(pg.evaluate("document.querySelector('.gl').textContent.trim()") .startswith('1/10'), '上方題號只顯示 1/10（沒有關卡號）')
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(500)
+    R.check(pg.evaluate("ST.screen") == 'result', '玩完 10 題：結果頁')
+    R.check(pg.evaluate("JSON.stringify(prog)") == '{}', '不動原本關卡的星星進度')
+    R.check('openLevel(' not in pg.inner_html('#app') and 'openLB()' not in pg.inner_html('#app'), '結果頁：沒有「下一關」、沒有排行榜')
+    R.check(not any('Leaderboard' in o['p'] or 'class_scores' in o['p'] for o in pg.evaluate("window.__ops")), '沒有 ?class：不寫排行榜、不回傳成績')
+    pg.locator('button:has-text("再玩")').first.click() if pg.locator('button:has-text("再玩")').count() else pg.evaluate("beginLevel()")
+    pg.wait_for_timeout(400)
+    R.check(pg.evaluate("ST.screen") == 'game' and pg.evaluate("ST.qs.every(q=>%s.includes(q.s.id))" % json.dumps(BIDS)), '再玩一次：仍然從句庫出題')
+    R.check(not errs, '句庫模式沒有網頁錯誤 %s' % errs)
+    b.close()
+
+    # 句庫裡有已不存在的句子編號 → 忽略；剛好 10 句 → 10 題全用到
+    ten = BIDS[:10]
+    b, pg, errs = page(p, '?bank=' + SID, db=bank_db(ten + [999999]))
+    start_ok = pg.evaluate("BANK.ids.length") == 10
+    R.check(start_ok, '句庫裡已不存在的句子編號會被略過')
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    R.check(sorted(pg.evaluate("ST.qs.map(q=>q.s.id)")) == sorted(ten), '剛好 10 句的句庫：10 題用到全部句子')
+    b.close()
+
+    # 班級連結：成績回傳，k＝句庫碼
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=bank_db(BIDS))
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(800)
+    db_ = pg.evaluate("window.__db")
+    keys = [k for k in db_ if k.startswith('class_scores/')]
+    R.check(len(keys) == 1 and keys[0].startswith('class_scores/%s_%s_%s_' % (CID, GAME, SID)), '班級＋句庫：成績寫在 class_scores/<班級碼>_<遊戲>_<句庫碼>_<暱稱雜湊>：%s' % keys)
+    if keys:
+        d = db_[keys[0]]
+        R.check(d.get('k') == SID and d.get('game') == GAME and d.get('cid') == CID and d.get('owner') == 'T1' and d.get('nick') == 'Zoe' and d['extra']['q'] == 10, '成績欄位：k＝句庫碼、game、cid、owner、nick、extra.q')
+    R.check('成績已回傳給老師' in pg.evaluate("document.body.innerText"), '結果頁顯示「成績已回傳給老師」')
+    R.check(not any('Leaderboard' in o['p'] for o in pg.evaluate("window.__ops")), '班級＋句庫：不寫公開排行榜')
+    R.check(pg.evaluate("JSON.stringify(prog)") == '{}', '班級＋句庫：星星進度不變')
+    b.close()
+
+    # 老師試玩（?preview）：不受維修影響，也不回傳成績
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID + '&preview=1', db=bank_db(BIDS, maint_open=False))
+    R.check(pg.locator('#clsFatal').count() == 0 and pg.locator('#bankStart').count() == 1, '試玩：維修中也能開')
+    pg.fill('#nm', 'Prof'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(600)
+    R.check(not any(k.startswith('class_scores/') for k in pg.evaluate("window.__db")), '試玩：不回傳成績')
+    b.close()
+
+    # 錯誤情形
+    errcases = [
+        ('維修中（沒有開關文件）', '?bank=' + SID, bank_db(BIDS, maint_open=False), None, '維修中'),
+        ('句庫不存在（或已被刪除）', '?bank=zzzzzzzz9999', bank_db(BIDS), None, '失效'),
+        ('句庫碼是另一個遊戲的', '?bank=' + SID, bank_db(BIDS, game=OTHER), None, '失效'),
+        ('句庫裡沒有任何有效句子', '?bank=' + SID, bank_db([999991, 999992]), None, '失效'),
+        ('連不上雲端', '?bank=' + SID, bank_db(BIDS), {'__failConn': True}, '連不上'),
+    ]
+    for name, q, db, flags, word in errcases:
+        b, pg, errs = page(p, q, db=db, flags=flags)
+        f = fatal(pg)
+        R.check(word in f, f'句庫連結：{name} → {f or "正常"}')
+        b.close()
+    b, pg, errs = page(p, '?bank=abc', db={})
+    R.check(pg.locator('button.ticket').count() == (4 if GAME == 'bei' else 3), '句庫碼格式不對（太短）：當作沒有句庫，照常顯示關卡')
+    b.close()
+    # 沒有 ?bank 時完全不變
+    b, pg, errs = page(p)
+    R.check(pg.evaluate("BANK.on") is False and pg.locator('#bankStart').count() == 0, '沒有 ?bank=：遊戲照原本的樣子')
+    b.close()
+
+# ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
+import subprocess
+_r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)
+R.check(_r.returncode == 0, 'sentences.json 與遊戲句子一致：' + (_r.stdout + _r.stderr).strip()[:120])
+
 print('FAILS', R.fails); sys.exit(1 if R.fails else 0)

@@ -1647,7 +1647,7 @@ async function clsSubmit(){
  try{
   if(!CLS.data)await clsLoad();
   if(!CLS.data)throw{code:'unavailable'};
-  const db=await repConn(),h=await nickHash(name),k='lv'+lv;
+  const db=await repConn(),h=await nickHash(name),k=BANK.on?BANK.id:'lv'+lv;
   const ref=db.collection('class_scores').doc(CLS.id+'_'+CLS_GAME+'_'+k+'_'+h);
   const ts=firebase.firestore.FieldValue.serverTimestamp();
   const old=await ref.get();
@@ -1673,6 +1673,28 @@ function clsResultHtml(){
 }
 document.addEventListener('DOMContentLoaded',clsBoot);
 if(document.readyState!=='loading')clsBoot();
+
+/* ===== 老師的自訂句庫（訂閱功能）：連結帶 ?bank=句庫碼 → 只從老師挑的句子出題 =====
+   句庫只存句子編號（central 專案 shared_babanks/{句庫碼}）；老師之後增減句子，已發出的連結自動跟著變。
+   首頁只有名字欄＋一張「開始」卡片；每次從句庫隨機抽 10 題；不動原本關卡的星星進度、不進排行榜。
+   加 &class= 時成績回傳老師（k＝句庫碼）；?preview（老師試玩）不回傳。沒有 ?bank= 時這段什麼都不做。 */
+const PREVIEW=new URLSearchParams(location.search).has('preview');
+const BANK=(function(){const id=String(new URLSearchParams(location.search).get('bank')||'');return{on:/^[A-Za-z0-9]{8,32}$/.test(id),id,set:null,ids:null,name:'',fatal:'',loading:true};})();
+async function bankLoad(){
+ if(!BANK.on||BANK.set)return;
+ try{const db=await repConn();
+  if(!PREVIEW){try{const m=await db.collection('portalStatus').doc('center-'+CLS_GAME).get();if(!m.exists||m.data().off!==false)BANK.fatal='maint';}catch(e){console.warn('maint check failed',e);}}
+  if(!BANK.fatal){
+   const s=await db.collection('shared_babanks').doc(BANK.id).get(),d=s.exists?s.data():null;
+   if(!d||d.game!==CLS_GAME||!Array.isArray(d.ids))BANK.fatal='linkBad';
+   else{const have=new Set(DATA.map(x=>x.id));BANK.ids=d.ids.filter(i=>have.has(i));BANK.name=String(d.name||'').slice(0,40);BANK.set=new Set(BANK.ids);if(!BANK.ids.length)BANK.fatal='linkBad';}
+  }
+ }catch(e){console.warn(e);BANK.fatal='linkOff';}
+ BANK.loading=false;
+ if(BANK.fatal)clsShowFatal(BANK.fatal);else if(ST.screen==='start')render();
+}
+document.addEventListener('DOMContentLoaded',bankLoad);
+if(document.readyState!=='loading')bankLoad();
 
 /* ---------- 流程 ---------- */
 function stopSp(){try{spId++;if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
@@ -1706,13 +1728,18 @@ function openLevel(n){
  if(!v){const e=$('nerr');if(e)e.textContent=Tp().needName;if(el){el.classList.add('err');el.focus();}return;}
  cfg.name=v;saveCfg();track('bei_start',{lang:cfg.lang,zh:cfg.zh,lv:n});ST.lv=n;beginLevel();
 }
+function openBank(){if(!BANK.set)return;
+ const el=$('nm'),v=(el?el.value:(cfg.name||'')).trim();
+ if(!v){const e=$('nerr');if(e)e.textContent=Tp().needName;if(el){el.classList.add('err');el.focus();}return;}
+ cfg.name=v;saveCfg();track('bei_start',{lang:cfg.lang,zh:cfg.zh,lv:'bank'});ST.lv=0;beginLevel();
+}
 function variants(s){const t=s.tok;return BADPOOL[s.id].map(ix=>ix.map(i=>t[i]));}
 function beginLevel(){
- const pool=shuffle(DATA.filter(d=>d.lv===ST.lv)).slice(0,10);
+ const pool=shuffle(BANK.on?DATA.filter(d=>BANK.set&&BANK.set.has(d.id)):DATA.filter(d=>d.lv===ST.lv)).slice(0,10);
  const MIX=['A','L','P','A','L','P','A','L','A','P']; // 把⇒被轉換題(T)先停用,程式保留,之後再決定要不要加回來
  const types=shuffle(MIX.slice(0,pool.length));
  ST.qs=pool.map((s,i)=>({s,type:types[i]}));
- ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('bei_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start('L'+ST.lv,cfg.name);}catch(e){}go('game');
+ ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('bei_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start(BANK.on?'bank':'L'+ST.lv,cfg.name);}catch(e){}go('game');
 }
 function newCur(){
  const q=ST.qs[ST.qi],s=q.s;
@@ -1798,7 +1825,7 @@ function repData(){
   imgs=[scene(s.id)[0],scene(s.id)[1]];imgk=['b','a'];
   pick=c.picks.join(' → ');
  }
- return {game:REP_GAME,why:ST.rep.why,note:String(ST.rep.note||'').trim().slice(0,100),id:s.id,lv:ST.lv,qt:String(q.type),
+ return {game:REP_GAME,why:ST.rep.why,note:String(ST.rep.note||'').trim().slice(0,100),id:s.id,lv:s.lv,qt:String(q.type),
   q:sent.slice(0,80),tr:String(s.es||'').slice(0,200),ans:sent.slice(0,80),pick:pick.slice(0,100),imgs:imgs,imgk:imgk,
   lang:cfg.lang,ver:REP_VER};
 }
@@ -1815,9 +1842,9 @@ async function repSend(){const r=ST.rep;if(!r||r.st==='sending')return;
 function nextQ(){stopSp();ST.qi++;if(ST.qi>=ST.qs.length)return finishLevel();newCur();go('game');}
 function finishLevel(){
  const n=ST.firstOK,tot=ST.qs.length,stars=n>=tot*0.9?3:n>=tot*0.7?2:n>=tot*0.5?1:0;
- const before=prog[ST.lv]||0;prog[ST.lv]=Math.max(before,stars);saveProg();
- ST.final={score:ST.score,stars,firstOK:n,newUnlock:stars>=1&&ST.lv<LV.length&&(prog[ST.lv+1]===undefined)&&before<1};
- if(CLS.on)clsSubmit();else lbSave(cfg.name,ST.lv,ST.score);track('bei_level_end',{lv:ST.lv,score:ST.score,stars});
+ const before=BANK.on?0:(prog[ST.lv]||0);if(!BANK.on){prog[ST.lv]=Math.max(before,stars);saveProg();}
+ ST.final={score:ST.score,stars,firstOK:n,newUnlock:!BANK.on&&stars>=1&&ST.lv<LV.length&&(prog[ST.lv+1]===undefined)&&before<1};
+ if(CLS.on){if(!(BANK.on&&PREVIEW))clsSubmit();}else if(!BANK.on)lbSave(cfg.name,ST.lv,ST.score);track('bei_level_end',{lv:ST.lv,score:ST.score,stars});
  try{window.HGPlays&&HGPlays.end({score:ST.score,name:cfg.name});}catch(e){}
  go('result');
 }
@@ -1869,7 +1896,16 @@ function titleHTML(cls){const t=T(),n2=NAME2();return `<div class="ttl ${cls||''
 function nameHTML(){const t=T();return `<div class="card"><div class="lab" style="margin-top:0">${t.name}</div><input id="nm" type="text" maxlength="16" placeholder="${esc(Tp().ph)}" value="${esc(cfg.name)}" oninput="this.classList.remove('err');$('nerr').textContent=''"><div class="nerr" id="nerr"></div></div>`;}
 function gearBar(){return `<div class="bar"><div></div><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div>`;}
 function lvName(l){return cfg.zh==='sc'?l.sc:l.tc;}
+function renderBankStart(){
+ const t=T(),tl=[-4,2,-2,3],ids=(BANK.ids||[]).slice(0,4);
+ let tiles='';ids.forEach((id,i)=>{tiles+=`<div class="tile" style="--r:${tl[i]}deg">${thumb(id,1)}</div>`;});
+ let h=`<div class="home hb">${gearBar()}<div class="strip">${tiles}</div>${titleHTML('b')}${nameHTML()}`;
+ if(BANK.loading)h+=`<div class="sub" style="text-align:center;margin-top:14px">…</div>`;
+ else if(BANK.set)h+=`<h2 class="pick" id="bankName">📚 ${esc(BANK.name)}</h2><div class="tickets"><button class="ticket" id="bankStart" onclick="openBank()"><div class="th">${thumb(ids[0],1)}</div><div class="tm"><div class="t">${t.start}</div></div><div class="stars">▶</div></button></div>`;
+ return h+`</div>`;
+}
 function renderStart(){
+ if(BANK.on)return renderBankStart();
  const t=T(),L1d=DATA.filter(d=>d.lv===1),L2d=DATA.filter(d=>d.lv===2),L3d=DATA.filter(d=>d.lv===3),L4d=DATA.filter(d=>d.lv===4),ids=[L1d[0].id,L2d[0].id,L3d[0].id,L4d[0].id],tl=[-4,2,-2,3];
  let tiles='';[L1d[0].id,L1d[8].id,L2d[1].id,L2d[8].id].forEach((id,i)=>{tiles+=`<div class="tile" style="--r:${tl[i]}deg">${thumb(id,1)}</div>`;});
  let h=`<div class="home hb">${gearBar()}<div class="strip">${tiles}</div>${titleHTML('b')}${nameHTML()}<h2 class="pick">${t.pick}</h2><div class="tickets">`;
@@ -1885,7 +1921,7 @@ function renderIntro(){
  <button class="btn" onclick="speak('${tcText(ex.tok)}')">${t.play}</button></div>
  <button class="btn primary block" onclick="beginLevel()">${t.begin}</button>`;
 }
-function topbar(){const t=T();return `<div class="bar gbar"><div class="gl">${ST.lv} · ${ST.qi+1}/${ST.qs.length}</div><div class="gs">${Tp().score} <b>${ST.score}</b>${ST.streak>=2?` · <span class="combo">${Tp().combo} ${ST.streak}</span>`:''}</div><div class="gb"><button class="ic" onclick="togglePause()" aria-label="${esc(ST.paused?Tp().resume:Tp().pause)}">${ST.paused?'▶':'⏸'}</button><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div></div>`;}
+function topbar(){const t=T();return `<div class="bar gbar"><div class="gl">${BANK.on?'':ST.lv+' · '}${ST.qi+1}/${ST.qs.length}</div><div class="gs">${Tp().score} <b>${ST.score}</b>${ST.streak>=2?` · <span class="combo">${Tp().combo} ${ST.streak}</span>`:''}</div><div class="gb"><button class="ic" onclick="togglePause()" aria-label="${esc(ST.paused?Tp().resume:Tp().pause)}">${ST.paused?'▶':'⏸'}</button><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div></div>`;}
 function renderGame(){
  const t=T(),q=ST.qs[ST.qi],c=ST.cur,s=q.s,last=ST.qi===ST.qs.length-1;
  if(ST.paused)return topbar()+`<div class="card center"><h2>${t.paused}</h2><div class="pcol"><button class="btn primary" onclick="togglePause()">▶ ${t.resume}</button><button class="btn" onclick="askConfirm('restart')">↻ ${t.restart}</button><button class="btn" onclick="askConfirm('menu')">⌂ ${t.menu}</button></div></div>`;
@@ -1926,8 +1962,8 @@ function renderResult(){
  h+=clsResultHtml()+`</div>`;
  const rev=ST.results.filter(r=>!(r.ok&&r.tries===1));
  h+=`<div class="row"><button class="btn" style="flex:1" onclick="beginLevel()">${t.replay}</button>`;
- if(ST.lv<LV.length)h+=`<button class="btn primary" style="flex:1" onclick="openLevel(${ST.lv+1})">${t.nextLv}</button>`;
- h+=`</div><div class="row" style="margin-top:8px"><button class="btn" style="flex:1" onclick="go('levels')">${t.menu}</button>${CLS.on?'':`<button class="btn" style="flex:1" onclick="openLB()">${t.rank}</button>`}</div>`;
+ if(!BANK.on&&ST.lv<LV.length)h+=`<button class="btn primary" style="flex:1" onclick="openLevel(${ST.lv+1})">${t.nextLv}</button>`;
+ h+=`</div><div class="row" style="margin-top:8px"><button class="btn" style="flex:1" onclick="go('levels')">${t.menu}</button>${CLS.on||BANK.on?'':`<button class="btn" style="flex:1" onclick="openLB()">${t.rank}</button>`}</div>`;
  if(rev.length){   /* 需要複習：預設收起來，點開才看（錯很多題時，按鈕不會被推到下面） */
   h+=`<button class="btn block revbtn ${ST.revOpen?'open':''}" onclick="toggleRev()" aria-expanded="${ST.revOpen?'true':'false'}"><span class="revt">${t.review}</span><span class="revn">${rev.length}</span><span class="revc">${ST.revOpen?'▴':'▾'}</span></button>`;
   if(ST.revOpen){h+=`<div class="card revcard"><div class="revgrid">`;rev.forEach(r=>{h+=`<div class="rev">${pairHTML(r.q.s.id)}<div class="sent">${seqHTML(r.q.s.tok)}。</div>${transHTML(r.q.s)}</div>`;});h+=`</div></div>`;}
