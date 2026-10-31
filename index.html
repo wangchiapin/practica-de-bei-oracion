@@ -85,7 +85,7 @@ figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:2px}
 .pics.L{justify-content:flex-start}
 .pics{min-height:calc((min(100vw,520px) - 84px)/2*.66 + 30px);display:flex;flex-direction:column;justify-content:center}
 .pics .pair{margin-bottom:0}
-.qcard{min-height:656px;display:flex;flex-direction:column}
+.qcard{display:flex;flex-direction:column}   /* 2026-10-31：拿掉手機的最小高度 656px，卡片依內容長高，不再硬把頁面撐得比螢幕高（iPhone Chrome 捲動被切掉的測試） */
 .qtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .qtop .qlabel{flex:1}
 .dictb{flex:none;white-space:nowrap}
@@ -105,7 +105,7 @@ figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:2px}
 .qgrid{flex:1;display:flex;flex-direction:column}
 .qact{flex:1;display:flex;flex-direction:column}
 .qact>.bot,.qact>.row:last-child{margin-top:auto;padding-top:8px}
-.stick{position:sticky;bottom:0;z-index:2;background:var(--card);padding-top:10px;padding-bottom:6px}
+.stick{position:static;background:var(--card);padding-top:10px;padding-bottom:6px}   /* 2026-10-31：不再黏在畫面底部（sticky 容易和 iPhone Chrome 工具列互相干擾） */
 .stick .btn{min-height:48px}
 .gbar{display:grid;grid-template-columns:auto 1fr auto;gap:10px}
 .gbar .gs{text-align:center}
