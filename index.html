@@ -105,7 +105,7 @@ figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:2px}
 .qgrid{flex:1;display:flex;flex-direction:column}
 .qact{flex:1;display:flex;flex-direction:column}
 .qact>.bot,.qact>.row:last-child{margin-top:auto;padding-top:8px}
-.stick{position:static;background:var(--card);padding-top:10px;padding-bottom:6px}   /* 2026-10-31：不再黏在畫面底部（sticky 容易和 iPhone Chrome 工具列互相干擾） */
+.stick{position:sticky;bottom:0;z-index:2;background:var(--card);padding-top:10px;padding-bottom:6px}
 .stick .btn{min-height:48px}
 .gbar{display:grid;grid-template-columns:auto 1fr auto;gap:10px}
 .gbar .gs{text-align:center}
@@ -162,6 +162,17 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 .vsp{width:48px;height:48px;border:1px solid #b3a994;border-radius:10px;background:#fff;font-size:16px;color:var(--ink);cursor:pointer;flex:none}
 .sent .tk{border-bottom:1px dotted #b3a994;cursor:pointer}
 @media (max-width:380px){.optS{font-size:18px;padding:4px 8px}}
+/* 2026-10-31 手機版遊戲畫面：整頁固定成螢幕高度、網頁本身不捲動，只有題目卡片在裡面捲（照天打雷劈的做法，避開 iPhone Chrome 捲動被切掉） */
+@media (max-width:859px){
+ html.gfix,html.gfix body{height:100%;overflow:hidden;overscroll-behavior:none}
+ html.gfix #hgCopy{display:none}
+ #app.gfix{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+ #app.gfix>.gbar{flex:none}
+ #app.gfix .slots{min-height:84px}
+ #app.gfix .tray{min-height:92px}
+ #app.gfix>.qcard{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-bottom:0}
+}
+
 @media (min-width:860px){
  #app{max-width:1040px;padding:calc(24px + env(safe-area-inset-top,0px)) 28px 72px}
  h1{font-size:34px}
@@ -1934,7 +1945,7 @@ function render(){
  const m={start:renderStart,levels:renderStart,intro:renderIntro,game:renderGame,result:renderResult,lb:renderLB};
  const el=$('app');if(!el)return;
  const nm=$('nm');if(nm&&ST.screen==='start')cfg.name=nm.value;
- el.className='';document.title=isZH()?'被':'被 · '+NAME2();
+ const gf=ST.screen==='game';el.className=gf?'gfix':'';document.documentElement.classList.toggle('gfix',gf);document.title=isZH()?'被':'被 · '+NAME2();
  el.innerHTML=m[ST.screen]()+sheetHTML();
 }
 document.addEventListener('click',e=>{const tk=e.target.closest&&e.target.closest('.tk');if(!tk)return;if(!tk.closest('.sent'))return;e.stopPropagation();e.preventDefault();showLook(tk.dataset.t);},true);

@@ -326,4 +326,22 @@ with sync_playwright() as p:
     R.check(len(docs) == 1, f'重送只寫同一筆（{len(docs)} 筆）')
     b.close()
 
+    # 手機版版面：遊戲畫面整頁不捲動，題目卡片在裡面捲、底部按鈕一直看得到
+    for (w, h) in [(390, 760), (360, 520)]:
+        b, pg, errs = page(p, width=w, height=h)
+        start(pg, 1)
+        m = pg.evaluate("""(() => { const d = document.documentElement, q = document.querySelector('.qcard'), st = document.querySelector('.stick');
+          const r = st ? st.getBoundingClientRect() : null;
+          return {page: d.scrollHeight - innerHeight, win: innerHeight, qs: q ? q.scrollHeight - q.clientHeight : -1,
+                  top: document.querySelector('.gbar').getBoundingClientRect().top, stickBottom: r ? r.bottom : -1, stickTop: r ? r.top : -1}; })()""")
+        R.check(m['page'] <= 1, f'{w}x{h}：整頁不會捲動（多出 {m["page"]}px）')
+        R.check(m['top'] >= 0, f'{w}x{h}：最上面的列看得到（top={m["top"]}）')
+        R.check(0 <= m['stickTop'] and m['stickBottom'] <= m['win'] + 1, f'{w}x{h}：底部按鈕在畫面內（{m["stickTop"]:.0f}~{m["stickBottom"]:.0f} / {m["win"]}）')
+        pg.evaluate("document.querySelector('.qcard').scrollTop = 99999"); pg.wait_for_timeout(100)
+        pg.evaluate("window.scrollTo(0, 99999)"); pg.wait_for_timeout(100)
+        R.check(pg.evaluate("window.scrollY") == 0, f'{w}x{h}：想捲整頁也捲不動')
+        pg.evaluate("document.querySelector('.qcard').scrollTop = 0")
+        R.check(pg.evaluate("document.querySelector('.gbar').getBoundingClientRect().top") >= 0, f'{w}x{h}：怎麼捲上面都不會被切掉')
+        b.close()
+
 print('FAILS', R.fails); sys.exit(1 if R.fails else 0)
