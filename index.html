@@ -162,11 +162,14 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 .vsp{width:48px;height:48px;border:1px solid #b3a994;border-radius:10px;background:#fff;font-size:16px;color:var(--ink);cursor:pointer;flex:none}
 .sent .tk{border-bottom:1px dotted #b3a994;cursor:pointer}
 @media (max-width:380px){.optS{font-size:18px;padding:4px 8px}}
-/* 2026-10-31 手機版遊戲畫面：整頁固定成螢幕高度、網頁本身不捲動，只有題目卡片在裡面捲（照天打雷劈的做法，避開 iPhone Chrome 捲動被切掉） */
+/* 2026-10-31 手機版：網頁本身固定成螢幕高度、不整頁捲動；首頁／結果頁由 #app 在裡面捲，題目畫面則由題目卡片在裡面捲
+   （照天打雷劈的做法，避開 iPhone Chrome 往下捲後上面被切掉、回不到頂端） */
 @media (max-width:859px){
- html.gfix,html.gfix body{height:100%;overflow:hidden;overscroll-behavior:none}
+ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+ body{display:flex;flex-direction:column;height:100vh;height:100dvh}
+ #app{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
  html.gfix #hgCopy{display:none}
- #app.gfix{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+ #app.gfix{display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
  #app.gfix>.gbar{flex:none}
  #app.gfix .slots{min-height:84px}
  #app.gfix .tray{min-height:92px}
@@ -1674,7 +1677,7 @@ if(document.readyState!=='loading')clsBoot();
 /* ---------- 流程 ---------- */
 function stopSp(){try{spId++;if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
 function toggleRev(){ST.revOpen=!ST.revOpen;render();}
-function go(s){if(s==='levels')s='start';ST.revOpen=false;stopSp();ST.vocab=false;ST.look=null;ST.screen=s;ST.paused=false;ST.set=false;ST.confirm=null;ST.setPaused=false;render();window.scrollTo(0,0);}
+function go(s){if(s==='levels')s='start';ST.revOpen=false;stopSp();ST.vocab=false;ST.look=null;ST.screen=s;ST.paused=false;ST.set=false;ST.confirm=null;ST.setPaused=false;render();window.scrollTo(0,0);{const a=$('app');if(a)a.scrollTop=0;}}
 function setShared(p){Object.assign(S,p);writeSettings(S);syncCfg();render();}
 function setCfg(k,v){
  if(k==='lang')return setShared({lang:v});

@@ -336,12 +336,32 @@ with sync_playwright() as p:
                   top: document.querySelector('.gbar').getBoundingClientRect().top, stickBottom: r ? r.bottom : -1, stickTop: r ? r.top : -1}; })()""")
         R.check(m['page'] <= 1, f'{w}x{h}：整頁不會捲動（多出 {m["page"]}px）')
         R.check(m['top'] >= 0, f'{w}x{h}：最上面的列看得到（top={m["top"]}）')
-        R.check(0 <= m['stickTop'] and m['stickBottom'] <= m['win'] + 1, f'{w}x{h}：底部按鈕在畫面內（{m["stickTop"]:.0f}~{m["stickBottom"]:.0f} / {m["win"]}）')
+        if m['stickBottom'] >= 0:   # 聽力／選句子題作答前沒有底部按鈕列，只有排句子題和答完後才有
+            R.check(0 <= m['stickTop'] and m['stickBottom'] <= m['win'] + 1, f'{w}x{h}：底部按鈕在畫面內（{m["stickTop"]:.0f}~{m["stickBottom"]:.0f} / {m["win"]}）')
         pg.evaluate("document.querySelector('.qcard').scrollTop = 99999"); pg.wait_for_timeout(100)
         pg.evaluate("window.scrollTo(0, 99999)"); pg.wait_for_timeout(100)
         R.check(pg.evaluate("window.scrollY") == 0, f'{w}x{h}：想捲整頁也捲不動')
         pg.evaluate("document.querySelector('.qcard').scrollTop = 0")
         R.check(pg.evaluate("document.querySelector('.gbar').getBoundingClientRect().top") >= 0, f'{w}x{h}：怎麼捲上面都不會被切掉')
+        b.close()
+
+    # 手機版首頁／排行榜：整頁不捲動，內容在 #app 裡面捲，最上面一定回得去，版權小字看得到
+    for scr in ['start', 'lb']:
+        b, pg, errs = page(p, width=390, height=640)
+        pg.evaluate("(a)=>{ST.screen=a; render();}", scr); pg.wait_for_timeout(200)
+        m = pg.evaluate("""(() => { const d = document.documentElement, a = document.getElementById('app'), c = document.getElementById('hgCopy');
+          return {page: d.scrollHeight - innerHeight, inner: a.scrollHeight - a.clientHeight, copyBottom: c ? c.getBoundingClientRect().bottom : -1, win: innerHeight}; })()""")
+        R.check(m['page'] <= 1, f'{scr}：整頁不會捲動（多出 {m["page"]}px）')
+        if scr == 'start':   # 排行榜沒資料時內容很短，不需要捲
+            R.check(m['inner'] > 0, f'{scr}：內容比螢幕長時在 #app 裡面捲（{m["inner"]}px）')
+        pg.evaluate("document.getElementById('app').scrollTop = 99999"); pg.wait_for_timeout(100)
+        pg.evaluate("window.scrollTo(0, 99999)"); pg.wait_for_timeout(100)
+        R.check(pg.evaluate("window.scrollY") == 0, f'{scr}：整頁怎麼捲都不動')
+        pg.evaluate("document.getElementById('app').scrollTop = 0"); pg.wait_for_timeout(100)
+        top = pg.evaluate("document.getElementById('app').getBoundingClientRect().top")
+        R.check(top >= 0 and pg.evaluate("document.getElementById('app').scrollTop") == 0, f'{scr}：捲回頂端後最上面完整看得到')
+        if m['copyBottom'] >= 0:
+            R.check(m['copyBottom'] <= m['win'] + 1, f'{scr}：版權小字在畫面內（{m["copyBottom"]:.0f} / {m["win"]}）')
         b.close()
 
 print('FAILS', R.fails); sys.exit(1 if R.fails else 0)
