@@ -21,10 +21,11 @@ FAKE_FB = r"""
     path, id: path.split('/').pop(),
     async get(){ if (path.startsWith('portalStatus') && window.__failPortal) throw new Error('portal-fail');
       return { exists: path in DB, id: path.split('/').pop(), data: () => DB[path] && clone(DB[path]) }; },
-    async set(d){ if (window.__denyScores && path.startsWith('class_scores')) { const e = new Error('denied'); e.code = 'permission-denied'; throw e; }
+    async set(d){ if (window.__hangReport && path.startsWith('game_reports')) return new Promise(() => {});
+      if (window.__denyScores && path.startsWith('class_scores')) { const e = new Error('denied'); e.code = 'permission-denied'; throw e; }
       ops.push({k:'set', p:path, d:clone(d)}); DB[path] = clone(d); },
     async update(d){ ops.push({k:'update', p:path, d:clone(d)}); DB[path] = Object.assign(DB[path]||{}, clone(d)); } }; }
-  function colRef(path){ const q = { doc: id => docRef(path + '/' + id),
+  function colRef(path){ const q = { doc: id => docRef(path + '/' + (id || ('D' + (window.__ops.length + 1) + Math.random().toString(36).slice(2, 6)))),
     async add(d){ ops.push({k:'add', p:path, d:clone(d)}); const id = 'A' + ops.length; DB[path + '/' + id] = clone(d); return { id }; },
     where(){ return q; }, orderBy(){ return q; }, limit(){ return q; },
     async get(){ const ks = Object.keys(DB).filter(k => k.startsWith(path + '/') && depth(k) === depth(path) + 1);
@@ -298,13 +299,31 @@ with sync_playwright() as p:
     pg.evaluate("repOpen()"); pg.wait_for_timeout(100)
     pg.evaluate("repWhy('wrong')")
     pg.evaluate("repSend()"); pg.wait_for_timeout(600)
-    rep = [o for o in pg.evaluate("window.__ops") if o['k'] == 'add' and o['p'] == 'game_reports']
+    rep = [o for o in pg.evaluate("window.__ops") if o['k'] in ('add', 'set') and o['p'].startswith('game_reports')]
     R.check(len(rep) == 1, '回報寫入 game_reports 一筆')
     if rep:
         d = rep[0]['d']
         R.check(d.get('game') == GAME, f'回報帶遊戲代號 game={d.get("game")}')
         R.check(d.get('done') is False, '回報預設未處理')
         R.check(pg.evaluate("ST.rep.st") == 'ok', '回報成功後畫面狀態 ok')
+    b.close()
+
+    # 網路卡住：超過 15 秒要顯示失敗、按鈕恢復；再送一次只寫同一筆（不重複）
+    b, pg, errs = page(p)
+    start(pg, 1)
+    pg.evaluate("window.__hangReport = true")
+    pg.evaluate("repOpen()"); pg.wait_for_timeout(100)
+    pg.evaluate("repWhy('wrong')")
+    pg.evaluate("setTimeout(repSend, 0)"); pg.wait_for_timeout(1000)
+    R.check(pg.evaluate("ST.rep.st") == 'sending', '網路卡住：先顯示送出中')
+    pg.wait_for_timeout(15500)
+    R.check(pg.evaluate("ST.rep.st") == 'err', '網路卡住：超過 15 秒顯示失敗')
+    R.check('disabled' not in pg.evaluate("repHtml()"), '失敗後送出按鈕恢復可按')
+    pg.evaluate("window.__hangReport = false")
+    pg.evaluate("repSend()"); pg.wait_for_timeout(600)
+    R.check(pg.evaluate("ST.rep.st") == 'ok', '再送一次成功')
+    docs = [k for k in pg.evaluate("Object.keys(window.__db)") if k.startswith('game_reports/')]
+    R.check(len(docs) == 1, f'重送只寫同一筆（{len(docs)} 筆）')
     b.close()
 
 print('FAILS', R.fails); sys.exit(1 if R.fails else 0)

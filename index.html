@@ -1756,8 +1756,11 @@ async function repConn(){
  if(!firebase.firestore)await loadScript(SDK+'firebase-firestore-compat.js');
  const app=firebase.apps.find(a=>a.name==='central')||firebase.initializeApp(REP_CENTRAL,'central');
  if(!app.auth().currentUser)await app.auth().signInAnonymously();   /* 匿名登入，按了才連線 */
- return repDb=app.firestore();
+ const db=app.firestore();
+ try{db.settings({experimentalAutoDetectLongPolling:true,merge:true});}catch(e){}   /* 手機網路差時自動換成比較穩的連線方式（2026-10-31） */
+ return repDb=db;
 }
+function repTimeout(p,ms){let t;return Promise.race([p,new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error('timeout')),ms);})]).finally(()=>clearTimeout(t));}   /* 超過時間就當失敗，不會一直卡在「送出中」 */
 function repHtml(){const r=ST.rep,t=T();
  if(!r)return `<button class="btn ghost repbtn" onclick="repOpen()">🚩 ${t.flag}</button>`;
  if(r.st==='ok')return `<div class="repmsg ok">✅ ${t.rSent}</div>`;
@@ -1789,8 +1792,9 @@ async function repSend(){const r=ST.rep;if(!r||r.st==='sending')return;
  if(!r.why){r.msg='rPick';return drawRep();}
  const n=$('repNote');if(n)r.note=n.value;
  const at=ST.cur;r.st='sending';r.msg='rSending';drawRep();
- try{const db=await repConn();
-  await db.collection('game_reports').add(Object.assign(repData(),{done:false,at:firebase.firestore.FieldValue.serverTimestamp()}));
+ try{const db=await repTimeout(repConn(),15000);
+  if(!r.ref)r.ref=db.collection('game_reports').doc();   /* 同一次回報重送時寫同一筆，不會重複 */
+  await repTimeout(r.ref.set(Object.assign(repData(),{done:false,at:firebase.firestore.FieldValue.serverTimestamp()})),15000);
   r.st='ok';r.msg='';
  }catch(e){console.warn('report failed',e);r.st='err';r.msg='rFail';}
  if(ST.cur===at&&ST.rep===r)drawRep();}
