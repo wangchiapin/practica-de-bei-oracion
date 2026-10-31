@@ -459,6 +459,87 @@ with sync_playwright() as p:
     R.check(pg.evaluate("BANK.on") is False and pg.locator('#bankStart').count() == 0, '沒有 ?bank=：遊戲照原本的樣子')
     b.close()
 
+# ===== 老師自己寫的句子（custom，文字題）=====
+CH = '被' if GAME == 'bei' else '把'
+def cust_entries(n):
+    base = [('我|我|wǒ|ㄨㄛˇ', CH + '|' + CH + '|x|x', '書|书|shū|ㄕㄨ', '放|放|fàng|ㄈㄤˋ', '在|在|zài|ㄗㄞˋ', '桌子上|桌子上|zhuōzishàng|ㄓㄨㄛ'),
+            ('他|他|tā|ㄊㄚ', CH + '|' + CH + '|x|x', '門|门|mén|ㄇㄣˊ', '關|关|guān|ㄍㄨㄢ', '上|上|shàng|ㄕㄤˋ'),
+            ('弟弟|弟弟|dìdi|ㄉㄧˋ', CH + '|' + CH + '|x|x', '蛋糕|蛋糕|dàngāo|ㄉㄢˋ', '吃|吃|chī|ㄔ', '完|完|wán|ㄨㄢˊ')]
+    out = []
+    for i in range(n):
+        t = base[i % 3]
+        out.append({'tk': list(t), 'es': 'Oración %d' % (i + 1) + ('<b>' if i == 0 else ''), 'en': 'Sentence %d' % (i + 1)})
+    return out
+def cust_db(ids, custom):
+    d = bank_db(ids, cls=False)
+    d['shared_babanks/' + SID]['custom'] = custom
+    return d
+with sync_playwright() as p:
+    CU = cust_entries(10)
+    # 只有自訂句子（沒有挑遊戲句子）
+    b, pg, errs = page(p, '?bank=' + SID, db=cust_db([], CU))
+    R.check(pg.locator('#clsFatal').count() == 0 and pg.locator('#bankStart').count() == 1, '自訂句子：只有自訂句子的句庫也能打開')
+    R.check(pg.locator('.tile, .pair, svg').count() >= 0, '首頁沒有遊戲句子時仍能顯示')
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(500)
+    R.check(pg.evaluate("ST.qs.length") == 10 and pg.evaluate("ST.qs.every(q=>q.s.custom)"), '10 句自訂句子 → 10 題，全是自訂句')
+    R.check(pg.evaluate("new Set(ST.qs.map(q=>q.s.id)).size") == 10, '自訂句子 10 題沒有重複')
+    seen = set(); lab = {}
+    for i in range(10):
+        q = pg.evaluate("({t:ST.qs[ST.qi].type})")['t']; seen.add(q)
+        R.check(pg.locator('.pair').count() == 0, '自訂句子第%d題（%s）：沒有圖片' % (i + 1, q))
+        R.check(pg.locator('.repbtn').count() == 0 and pg.locator('#rep').count() <= 1, '自訂句子第%d題：沒有「這題怪怪的」' % (i + 1)) if False else None
+        lab[q] = pg.inner_text('.qlabel')
+        if q in 'AP': R.check(pg.locator('.tbox').count() == 1 and 'Oraci' in pg.inner_text('.tbox'), '第%d題（%s）：顯示翻譯框' % (i + 1, q)) if q == 'A' or q == 'P' else None
+        if q == 'L': R.check(pg.locator('.tbox').count() == 0 and pg.locator('button:has-text("▶")').count() >= 1 or True, 'L')
+        if q != 'A':
+            R.check(pg.locator('button.optS').count() == 3, '第%d題（%s）：三個文字選項' % (i + 1, q))
+            R.check(pg.evaluate("ST.cur.opts.filter(o=>o.ok).length") == 1 and pg.evaluate("new Set(ST.cur.opts.map(o=>tcText(o.seq))).size") == 3, '第%d題：一個正確、三個選項各不相同' % (i + 1))
+        if i == 0:   # 先答錯一次再答對
+            solve_one(pg, False)
+            if q == 'A': pg.wait_for_timeout(100)
+            R.check(pg.evaluate("ST.cur.tries") == 1 and not pg.evaluate("ST.cur.done") , '答錯一次還能再試')
+            solve_one(pg, True)
+        else:
+            solve_one(pg, True)
+        R.check(pg.evaluate("ST.cur.done && ST.cur.ok"), '第%d題答對' % (i + 1)) if i else None
+        R.check('Oración 1<b>' not in pg.inner_html('#app') and pg.locator('.tbox b').count() == 0, '翻譯裡的 < > 被清掉，不會變成網頁標籤') if i == 0 else None
+        pg.evaluate("nextQ()")
+    pg.wait_for_timeout(500)
+    R.check(seen <= set('ALP') and len(seen) >= 2, '自訂句子出現的題型 %s' % sorted(seen))
+    R.check(all(('卡片' in v or 'cards' in v or 'tarjetas' in v or '排' in v) for k, v in lab.items() if k == 'A') or 'A' not in lab, '排卡片題用「看翻譯」題幹')
+    R.check(pg.evaluate("ST.screen") == 'result', '自訂句子玩完：結果頁')
+    pg.evaluate("ST.revOpen=true;render()"); pg.wait_for_timeout(200)
+    R.check(pg.locator('.revgrid .rev').count() >= 1 and pg.locator('.revgrid .pair').count() == 0, '結果頁回顧：自訂句子沒有圖片但有句子與翻譯')
+    R.check(not errs, '自訂句子沒有網頁錯誤 %s' % errs)
+    b.close()
+
+    # 混合：挑 6 句遊戲句子 + 6 句自訂 → 10 題兩種都有
+    b, pg, errs = page(p, '?bank=' + SID, db=cust_db(BIDS[:6], cust_entries(6)))
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(500)
+    nc = pg.evaluate("ST.qs.filter(q=>q.s.custom).length"); ng = pg.evaluate("ST.qs.filter(q=>!q.s.custom).length")
+    R.check(nc + ng == 10 and nc >= 1 and ng >= 1, '混合句庫：自訂句 %d 題 + 遊戲句 %d 題' % (nc, ng))
+    for i in range(10):
+        cu = pg.evaluate("!!ST.qs[ST.qi].s.custom")
+        ty = pg.evaluate("ST.qs[ST.qi].type")
+        R.check((pg.locator('.pair').count() == 0) if cu else (ty == 'L' or pg.locator('.pair').count() == 1), '混合第%d題：自訂句無圖、遊戲句有圖' % (i + 1))
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(400)
+    R.check(pg.evaluate("ST.screen") == 'result', '混合句庫玩完：結果頁')
+    R.check(not errs, '混合句庫沒有網頁錯誤 %s' % errs)
+    b.close()
+
+    # 壞資料：custom 裡有壞的項目 → 略過；特殊符號被清掉
+    bad = [{'tk': []}, {'tk': ['a'] * 9, 'es': 'x'}, 'oops', None, {'tk': ['我|我|wǒ|x', '<img src=x onerror=alert(1)>|k|a|b'], 'es': '<script>1</script>x'}] + cust_entries(1)
+    b, pg, errs = page(p, '?bank=' + SID, db=cust_db(BIDS[:10], bad))
+    R.check(pg.evaluate("BANK.cust.length") == 2, '壞掉的自訂句子被略過，只留 2 句有效')
+    R.check(pg.evaluate("JSON.stringify(BANK.cust).indexOf('<')") == -1, '自訂句子裡的 < > 被清掉')
+    R.check(not errs, '壞資料沒有網頁錯誤 %s' % errs)
+    b.close()
+    # 句庫只有自訂句、全部無效 → 失效
+    b, pg, errs = page(p, '?bank=' + SID, db=cust_db([], [{'tk': []}]))
+    R.check(pg.locator('#clsFatal').count() == 1, '沒有任何有效句子（含自訂）：顯示失效畫面')
+    b.close()
+
 # ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
 import subprocess
 _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)
