@@ -16,8 +16,10 @@ PATCH = {
     'dirty_cup':    ('La taza fue ensuciada', 'The cup was made dirty'),
     'dirty_car':    ('El carro fue ensuciado', 'The car was made dirty'),
     'dirty_wallet': ('La cartera fue ensuciada', 'The wallet was made dirty'),
-    'lost_wallet':  ('La cartera fue perdida', 'The wallet was lost'),
+    'lost_wallet':  ('Se perdió la cartera', 'The wallet got lost'),
 }
+# 這些事件的西英文不是「fue…por」被動說法，不能接「por 誰」，積木裡不讓選人物
+NO_WHO = {'lost_wallet'}
 # 老師有男有女，積木裡只留一個（都是「老師」）
 SKIP_WHO = {'tchf'}
 
@@ -67,7 +69,7 @@ def build(pg):
     for e in out_ev:
         if e['vb'] not in groups: groups.append(e['vb'])
     out_ev.sort(key=lambda e: groups.index(e['vb']))
-    data = {'v': 1, 'g': 'bei', 'bei': bei, 'le': le, 'who': who, 'ev': [{k: e[k] for k in ('k', 'tk', 'vb', 'es', 'en', 'dw')} for e in out_ev]}
+    data = {'v': 1, 'g': 'bei', 'bei': bei, 'le': le, 'who': who, 'ev': [dict({k: e[k] for k in ('k', 'tk', 'vb', 'es', 'en', 'dw')}, **({'nw': 1} if e['k'] in NO_WHO else {})) for e in out_ev]}
     ev_sp = {e['k']: e['sp'] for e in out_ev}
     return data, ev_sp
 
