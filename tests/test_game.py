@@ -677,6 +677,64 @@ with sync_playwright() as p:
         R.check(not errs, '亂寫的 cfg 沒有網頁錯誤 %s' % errs)
         b.close()
 
+# ===== 逐題紀錄（class_plays，老師中心「答錯統計」用）=====
+with sync_playwright() as p:
+    clsdb = dict(cust_db([], cust_entries(10)), **{'classes/' + CID: {'owner': 'T1', 'showBoard': False}})
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=clsdb)
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    for i in range(10):
+        if i == 0: solve_one(pg, False); solve_one(pg, True)   # 第一題先答錯一次
+        else: solve_one(pg, True)
+        pg.evaluate("nextQ()")
+    pg.wait_for_timeout(800)
+    dbx = pg.evaluate("window.__db")
+    pk = [k for k in dbx if k.startswith('class_plays/')]
+    R.check(len(pk) == 1, '班級連結玩完一輪：寫一筆 class_plays（逐題紀錄）%s' % pk)
+    if pk:
+        d = dbx[pk[0]]
+        R.check(sorted(d.keys()) == sorted(['cid', 'owner', 'game', 'h', 'nick', 'at', 'k', 'score', 'qs']), 'class_plays 欄位正確 %s' % sorted(d.keys()))
+        R.check(d['game'] == GAME and d['k'] == SID and d['nick'] == 'Zoe' and d['cid'] == CID and d['owner'] == 'T1', '遊戲、句庫碼、暱稱、班級、老師都對')
+        R.check(len(d['qs']) == 10 and all(set(q.keys()) == {'s', 't', 'f', 'ok', 'w'} for q in d['qs']), '10 題，每題有 s／t／f／ok／w')
+        R.check(d['qs'][0]['f'] == 0 and d['qs'][0]['ok'] == 1 and len(d['qs'][0]['w']) >= 1, '第一題：第一次沒答對、最後答對、記下選錯的內容 %s' % d['qs'][0])
+        R.check(all(q['f'] == 1 and q['ok'] == 1 and q['w'] == [] for q in d['qs'][1:]), '其他題：第一次就答對、沒有選錯的內容')
+        R.check(all(q['s'] and '。' not in q['s'] and len(q['s']) <= 40 and q['t'] in 'ALP' for q in d['qs']), '句子是文字（沒有句號）、題型 A／L／P')
+        R.check(all(w and '。' not in w for q in d['qs'] for w in q['w']), '選錯的內容是文字')
+    b.close()
+    # 玩兩題都答錯（2 次機會用完）：ok = 0
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=clsdb)
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    solve_one(pg, False); solve_one(pg, False); R.check(pg.evaluate("ST.cur.done && !ST.cur.ok"), '兩次都答錯：這題結束')
+    pg.evaluate("nextQ()")
+    for i in range(9):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(800)
+    dbx = pg.evaluate("window.__db"); pk = [k for k in dbx if k.startswith('class_plays/')]
+    R.check(pk and dbx[pk[0]]['qs'][0]['ok'] == 0 and dbx[pk[0]]['qs'][0]['f'] == 0 and len(dbx[pk[0]]['qs'][0]['w']) >= 1, '兩次都答錯的題：ok=0、記下選錯的內容')
+    b.close()
+    # 沒有 ?class、試玩：不寫 class_plays
+    b, pg, errs = page(p, '?bank=' + SID, db=cust_db([], cust_entries(10)))
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(300)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(500)
+    R.check(not [k for k in pg.evaluate("window.__db") if k.startswith('class_plays/')], '沒有班級連結：不寫逐題紀錄')
+    b.close()
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID + '&preview=1', db=clsdb)
+    pg.fill('#nm', 'Prof'); pg.locator('#bankStart').click(); pg.wait_for_timeout(300)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(500)
+    R.check(not [k for k in pg.evaluate("window.__db") if k.startswith('class_plays/')], '試玩（preview）：不寫逐題紀錄')
+    b.close()
+    # 老師到期（寫入被拒）：成績照樣處理，不當機
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=clsdb, flags={'__denyScores': True})
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(300)
+    for i in range(10):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(600)
+    R.check(pg.evaluate("ST.screen") == 'result' and not errs, '成績寫入被拒：結果頁照常顯示，沒有網頁錯誤 %s' % errs)
+    b.close()
+
 # ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
 import subprocess
 _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)

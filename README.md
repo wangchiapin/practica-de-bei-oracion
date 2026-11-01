@@ -119,3 +119,5 @@ iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到�
 - 每次從句庫隨機抽 10 題（題型比例照原本），不動原本關卡的星星進度、不寫公開排行榜。句庫裡已不存在的句子編號會略過。
 - 加 `&class=班級碼` 時成績回傳老師，`class_scores` 的 `k` ＝句庫碼；`?preview` 不回傳成績且不受維修影響。維修中、句庫失效、連不上雲端都有提示（同班級模式）。
 - `sentences.json`：老師中心挑句子用的句子清單，由 `tools/make_sentences.py` 從 `index.html` 的 `DATA` 產生；**句子有增減後要重新執行 `python3 tools/make_sentences.py`**，`tests/test_game.py` 會檢查清單有沒有過期。
+
+- **逐題紀錄（訂閱老師的句庫班級連結）：** 玩完一回合，`class_scores` 之後再寫一筆 `class_plays`（`{cid,owner,game,h,nick,at,k,score,qs[{s句子文字,t題型A/L/P,f第一次答對0/1,ok最後答對0/1,w選錯的內容[]}]}`，最多 30 題）；包在 try/catch，失敗不影響成績。老師中心用它做「最常答錯的句子」「各學生」與「逐題明細 CSV」。試玩（`preview`）與沒有班級連結時不寫。規則見 game-kit `subscription-48d3c.rules.txt`。

@@ -1657,6 +1657,8 @@ async function clsSubmit(){
   const old=await ref.get();
   if(!old.exists)await ref.set({cid:CLS.id,owner:CLS.data.owner,game:CLS_GAME,k,h,nick:name,best:score,plays:1,lastAt:ts,extra});
   else{const o=old.data(),u={nick:name,plays:(o.plays||0)+1,lastAt:ts,best:Math.max(o.best||0,score)};if(score>(o.best||0))u.extra=extra;await ref.update(u);}
+  /* 逐題紀錄（老師中心「答錯統計」用）：寫失敗不影響成績 */
+  try{await db.collection('class_plays').doc().set({cid:CLS.id,owner:CLS.data.owner,game:CLS_GAME,h,nick:name,at:ts,k,score,qs:ST.results.slice(0,30).map(r=>({s:tcText(r.q.s.tok).replace(/。$/,'').slice(0,40),t:r.q.type,f:(r.ok&&r.tries===1)?1:0,ok:r.ok?1:0,w:r.w||[]}))});}catch(e){console.warn('plays',e);}
   CLS.msg=clsT('sentOk');
   if(CLS.data.showBoard===true){
    const snap=await db.collection('class_scores').where('cid','==',CLS.id).limit(300).get();
@@ -1800,7 +1802,7 @@ function newCur(){
  const q=ST.qs[ST.qi],s=q.s;
  ST.look=null;ST.vocab=false;ST.rep=null;const c={tries:0,hint:false,done:false,ok:null,pts:0,elapsed:0,t0:Date.now(),msg:'',locked:[],picked:-1,picks:[]};
 
- if(s.custom&&q.type!=='A'){if(q.type==='L'&&s.img&&BANK.cust.filter(x=>x.img).length>=3){const oth=shuffle(BANK.cust.filter(x=>x.img&&x!==s)).slice(0,2);c.pic=true;c.opts=shuffle([{img:s.img,ok:true},...oth.map(o=>({img:o.img,ok:false}))]);c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);ST.cur=c;return;}const wrong=custWrong(s);c.opts=shuffle([{seq:s.tok,ok:true},...wrong.map(w=>({seq:w,ok:false}))]);if(q.type==='L'){c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}ST.cur=c;return;}
+ if(s.custom&&q.type!=='A'){if(q.type==='L'&&s.img&&BANK.cust.filter(x=>x.img).length>=3){const oth=shuffle(BANK.cust.filter(x=>x.img&&x!==s)).slice(0,2);c.pic=true;c.opts=shuffle([{img:s.img,ok:true,tc:tcText(s.tok)},...oth.map(o=>({img:o.img,ok:false,tc:tcText(o.tok)}))]);c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);ST.cur=c;return;}const wrong=custWrong(s);c.opts=shuffle([{seq:s.tok,ok:true},...wrong.map(w=>({seq:w,ok:false}))]);if(q.type==='L'){c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}ST.cur=c;return;}
  if(q.type==='A'){let tray=shuffle(s.tok.map((t,i)=>Object.assign({i},t)));let n=0;while(tray.every((t,i)=>t.i===i)&&n++<10)tray=shuffle(tray);c.tray=tray;c.placed=[];}
  else if(q.type==='L'){const others=pickOthers(s);c.opts=shuffle([s,...others]).map(d=>({id:d.id,ok:d.id===s.id}));c.played=false;setTimeout(()=>{if(ST.screen==='game'&&ST.cur===c&&!ST.paused)playL('s');},350);}
  else if(q.type==='T'){const bad=[[2,1,0,3,4],[0,2,1,3,4]].map(ix=>ix.map(i=>s.tok[i]));c.opts=shuffle([{seq:s.tok,ok:true},...bad.map(w=>({seq:w,ok:false}))]);}
@@ -1829,6 +1831,15 @@ function pickOpt(k){
 }
 function shakeFx(){const el=document.querySelector('.fb.bad');if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}}
 function mult(){return ST.streak>=3?1.5:ST.streak===2?1.2:1;}
+/* 逐題紀錄用：這題學生選錯了哪些句子（文字，最多 3 個）。答對的那次不算 */
+function wrongList(q,c){
+ const me=tcText(q.s.tok).replace(/。$/,''),out=[],ps=(c.picks||[]).slice(0,c.ok?-1:undefined);
+ ps.forEach(p=>{let t='';
+  if(typeof p==='number'){const o=c.opts&&c.opts[p];t=o?(o.tc||(o.id!=null?tcText((DATA.find(d=>d.id===o.id)||{tok:[]}).tok):'')):'';}
+  else t=String(p);
+  t=t.replace(/。$/,'');if(t&&t!==me&&out.indexOf(t)<0)out.push(t.slice(0,40));});
+ return out.slice(0,3);
+}
 function finishQ(ok){
  const c=ST.cur;c.done=true;c.ok=ok;let pts=0;
  if(ok){
@@ -1837,7 +1848,7 @@ function finishQ(ok){
   pts=Math.max(0,pts-(c.hint?20:0));
  }else ST.streak=0;
  c.pts=pts;ST.score+=pts;
- ST.results.push({q:ST.qs[ST.qi],ok,tries:c.tries,hint:c.hint,pts});
+ ST.results.push({q:ST.qs[ST.qi],ok,tries:c.tries,hint:c.hint,pts,w:wrongList(ST.qs[ST.qi],c)});
  track('bei_answer',{lv:ST.lv,id:ST.qs[ST.qi].s.id,type:ST.qs[ST.qi].type,ok:ok,tries:c.tries});
  speak(curText());render();
 }
