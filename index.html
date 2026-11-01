@@ -164,6 +164,7 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 /* 自己寫的句子（文字題）：翻譯框 */
 .pimg{display:block;width:100%;max-width:300px;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin:0 auto;background:#fff}
 .opt3 .pimg{max-width:none;border-radius:8px}
+.pimg[src^="data:image/svg+xml"]{aspect-ratio:200/130;object-fit:contain}
 .tbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 14px;text-align:center;font-size:19px;line-height:1.5;margin-bottom:8px}
 @media (max-width:380px){.optS{font-size:18px;padding:4px 8px}}
 /* 2026-10-31 手機版：網頁本身固定成螢幕高度、不整頁捲動；首頁／結果頁由 #app 在裡面捲，題目畫面則由題目卡片在裡面捲
@@ -1692,7 +1693,16 @@ function custParse(c,i){
  if(!c||!Array.isArray(c.tk)||!c.tk.length||c.tk.length>8)return null;
  const tok=c.tk.map(x=>{const a=cleanS(x,80).split('|');return{tc:a[0]||'',sc:a[1]||a[0]||'',py:a[2]||'',zy:a[3]||''};});
  if(tok.some(t=>!t.tc))return null;
- return{id:'c'+(i+1),lv:0,custom:true,es:cleanS(c.es,200),en:cleanS(c.en,200),tok,im:/^[12][a-z0-9]{3,12}$/.test(String(c.im||''))?String(c.im):'',img:''};
+ const o={id:'c'+(i+1),lv:0,custom:true,es:cleanS(c.es,200),en:cleanS(c.en,200),tok,im:/^[12][a-z0-9]{3,12}$/.test(String(c.im||''))?String(c.im):'',img:''};
+ const bl=/^([a-z0-9_]{1,24})\.([a-z0-9]{1,12})$/.exec(String(c.bl||''));
+ if(bl&&PERS[bl[2]]){const sp=blkSp(bl[1]);if(sp){try{const sv=(sp[0]==='D'?sceneD(sp[1],sp[2],bl[2]):sceneM(sp[1],bl[2]))[1];o.img='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sv);o.sv=true;o.im='';}catch(e){}}}   /* 積木組句：圖由程式現場畫，不存圖片；事件代號只收遊戲裡真的有的 */
+ return o;
+}
+/* 積木組句的事件代號 → 場景（M：打破、弄髒…；D：賣掉、丟掉、拿走）。只認遊戲自己的場景表裡有的，亂填的畫不出來就當沒有圖 */
+let _blkSp=null;
+function blkSp(k){
+ if(!_blkSp){_blkSp={};for(const id in SPEC){const sp=SPEC[id];if(sp&&sp[0]==='M')_blkSp[sp[1].replace(':','_')]=['M',sp[1]];else if(sp&&sp[0]==='D')_blkSp['d_'+sp[1]+'_'+sp[2]]=['D',sp[1],sp[2]];}}
+ return Object.prototype.hasOwnProperty.call(_blkSp,k)?_blkSp[k]:null;
 }
 /* 老師加的圖：存在 shared_babimgs/{句庫碼}_{1|2}（每份最多 10 張，代號前面的數字就是在哪一份）。
    用句庫文件的更新時間當版本，裝置記住圖片（localStorage），沒更新就不再下載，省資料庫流量；讀不到圖就當沒有圖，照出文字題。 */
@@ -1711,7 +1721,7 @@ async function custImgs(d){
   }catch(e){console.warn('imgs',e);map={};}
  }
  const okImg=/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
- BANK.cust.forEach(x=>{const v=x.im?map[x.im.slice(1)]:'';x.img=(typeof v==='string'&&v.length<120000&&okImg.test(v))?v:'';});
+ BANK.cust.forEach(x=>{if(x.sv)return;const v=x.im?map[x.im.slice(1)]:'';x.img=(typeof v==='string'&&v.length<120000&&okImg.test(v))?v:'';});
 }
 const custTr=s=>cfg.lang==='en'?(s.en||s.es):(s.es||s.en);
 function custWrong(s){
