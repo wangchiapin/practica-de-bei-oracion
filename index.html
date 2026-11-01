@@ -1719,7 +1719,7 @@ function custWrong(s){
  if(out.length<2)for(const d of shuffle(DATA.slice())){const k=tcText(d.tok);if(!seen.has(k)&&out.length<2){seen.add(k);out.push(d.tok);}}
  return out;
 }
-const BANK=(function(){const id=String(new URLSearchParams(location.search).get('bank')||'');return{on:/^[A-Za-z0-9]{8,32}$/.test(id),id,set:null,ids:null,cust:[],name:'',fatal:'',loading:true};})();
+const BANK=(function(){const id=String(new URLSearchParams(location.search).get('bank')||'');return{on:/^[A-Za-z0-9]{8,32}$/.test(id),id,set:null,ids:null,cust:[],cfg:null,name:'',fatal:'',loading:true};})();
 async function bankLoad(){
  if(!BANK.on||BANK.set)return;
  try{const db=await repConn();
@@ -1727,7 +1727,7 @@ async function bankLoad(){
   if(!BANK.fatal){
    const s=await db.collection('shared_babanks').doc(BANK.id).get(),d=s.exists?s.data():null;
    if(!d||d.game!==CLS_GAME||!Array.isArray(d.ids))BANK.fatal='linkBad';
-   else{const have=new Set(DATA.map(x=>x.id));BANK.ids=d.ids.filter(i=>have.has(i));BANK.name=String(d.name||'').slice(0,40);BANK.set=new Set(BANK.ids);BANK.cust=(Array.isArray(d.custom)?d.custom:[]).slice(0,80).map(custParse).filter(Boolean);BANK.cust.forEach(x=>x.tok.forEach(t=>{if(!TOKMAP[t.tc])TOKMAP[t.tc]=t;}));await custImgs(d);if(!BANK.ids.length&&!BANK.cust.length)BANK.fatal='linkBad';}
+   else{const have=new Set(DATA.map(x=>x.id));BANK.ids=d.ids.filter(i=>have.has(i));BANK.name=String(d.name||'').slice(0,40);BANK.set=new Set(BANK.ids);BANK.cust=(Array.isArray(d.custom)?d.custom:[]).slice(0,80).map(custParse).filter(Boolean);BANK.cust.forEach(x=>x.tok.forEach(t=>{if(!TOKMAP[t.tc])TOKMAP[t.tc]=t;}));await custImgs(d);BANK.cfg=(d.cfg&&typeof d.cfg==='object')?{n:+d.cfg.n,mix:String(d.cfg.mix||'')}:null;if(!BANK.ids.length&&!BANK.cust.length)BANK.fatal='linkBad';}
   }
  }catch(e){console.warn(e);BANK.fatal='linkOff';}
  BANK.loading=false;
@@ -1774,11 +1774,26 @@ function openBank(){if(!BANK.set)return;
  cfg.name=v;saveCfg();track('bei_start',{lang:cfg.lang,zh:cfg.zh,lv:'bank'});ST.lv=0;beginLevel();
 }
 function variants(s){const t=s.tok;return BADPOOL[s.id].map(ix=>ix.map(i=>t[i]));}
+/* 句庫模式的題數與題型比例（老師在句庫的「設定」分頁選：10／20／30 題；比例＝照原本／平均／多排卡片／多聽力／多選句子）。
+   沒設定＝10 題、照原本。句子不夠多時同一句會再出現，但盡量換一種題型。 */
+function bankQs(){
+ const cf=BANK.cfg||{},n=[10,20,30].includes(cf.n)?cf.n:10,mix=['orig','even','A','L','P'].includes(cf.mix)?cf.mix:'orig',B={A:4,L:3,P:3};
+ let cnt;
+ if(mix==='orig')cnt={A:B.A*n/10,L:B.L*n/10,P:B.P*n/10};
+ else if(mix==='even'){const q=Math.floor(n/3);cnt={A:q+(n-3*q),L:q,P:q};}
+ else{const h=Math.round(n/2),r=n-h,a=Math.ceil(r/2),o=['A','L','P'].filter(x=>x!==mix);cnt={A:0,L:0,P:0};cnt[mix]=h;cnt[o[0]]=a;cnt[o[1]]=r-a;}
+ const all=DATA.filter(d=>BANK.set&&BANK.set.has(d.id)).concat(BANK.cust),seq=[];
+ while(seq.length<n){const c=shuffle(all.slice());if(seq.length&&c.length>1&&c[0]===seq[seq.length-1])c.push(c.shift());seq.push(...c);}
+ seq.length=n;
+ const used=new Map();
+ return seq.map(s=>{const u=used.get(s)||[],av=['A','L','P'].filter(t=>cnt[t]>0);let c=av.filter(t=>!u.includes(t));if(!c.length)c=av;const t=c[Math.floor(Math.random()*c.length)];cnt[t]--;u.push(t);used.set(s,u);return{s,type:t};});
+}
 function beginLevel(){
- const pool=shuffle(BANK.on?DATA.filter(d=>BANK.set&&BANK.set.has(d.id)).concat(BANK.cust):DATA.filter(d=>d.lv===ST.lv)).slice(0,10);
+ if(BANK.on)ST.qs=bankQs();else{
+ const pool=shuffle(DATA.filter(d=>d.lv===ST.lv)).slice(0,10);
  const MIX=['A','L','P','A','L','P','A','L','A','P']; // 把⇒被轉換題(T)先停用,程式保留,之後再決定要不要加回來
  const types=shuffle(MIX.slice(0,pool.length));
- ST.qs=pool.map((s,i)=>({s,type:types[i]}));
+ ST.qs=pool.map((s,i)=>({s,type:types[i]}));}
  ST.paused=false;ST.qi=0;ST.score=0;ST.streak=0;ST.firstOK=0;ST.results=[];newCur();track('bei_level_start',{lv:ST.lv});try{window.HGPlays&&HGPlays.start(BANK.on?'bank':'L'+ST.lv,cfg.name);}catch(e){}go('game');
 }
 function newCur(){

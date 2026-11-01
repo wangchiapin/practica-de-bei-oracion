@@ -616,6 +616,67 @@ with sync_playwright() as p:
     R.check(pg.evaluate("BANK.cust.filter(x=>x.img).length") == 0 and not errs, '第 2 份圖片文件不存在：沒有圖，不報錯 %s' % errs)
     b.close()
 
+# ===== 句庫的題數與題型比例（cfg）=====
+BASEMIX = {'A': 4, 'L': 3, 'P': 3} if GAME == 'bei' else {'A': 5, 'L': 3, 'P': 2}
+def cfg_db(n_sent, cfg):
+    d = cust_db(BIDS[:n_sent - 5] if n_sent > 5 else [], cust_entries(5 if n_sent > 5 else n_sent))
+    if cfg is not None: d['shared_babanks/' + SID]['cfg'] = cfg
+    return d
+def counts(pg):
+    return pg.evaluate("(()=>{const c={A:0,L:0,P:0};ST.qs.forEach(q=>c[q.type]++);return c})()")
+with sync_playwright() as p:
+    cases = [
+        ('沒有 cfg', None, 10, {k: v for k, v in BASEMIX.items()}),
+        ('20 題照原本', {'n': 20, 'mix': 'orig'}, 20, {k: v * 2 for k, v in BASEMIX.items()}),
+        ('30 題平均', {'n': 30, 'mix': 'even'}, 30, {'A': 10, 'L': 10, 'P': 10}),
+        ('10 題平均', {'n': 10, 'mix': 'even'}, 10, {'A': 4, 'L': 3, 'P': 3}),
+        ('30 題多聽力', {'n': 30, 'mix': 'L'}, 30, {'A': 8, 'L': 15, 'P': 7}),
+        ('20 題多排卡片', {'n': 20, 'mix': 'A'}, 20, {'A': 10, 'L': 5, 'P': 5}),
+        ('20 題多選句子', {'n': 20, 'mix': 'P'}, 20, {'A': 5, 'L': 5, 'P': 10}),
+    ]
+    for name, cf, n, exp in cases:
+        b, pg, errs = page(p, '?bank=' + SID, db=cfg_db(12, cf))   # 7 句挑的 + 5 句自己寫的 = 12 句，12 句，比 20、30 題少
+        pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+        R.check(pg.evaluate("ST.qs.length") == n and counts(pg) == exp, '%s：%d 題、題型 %s' % (name, n, exp) + ' 實際 %s' % counts(pg))
+        R.check(pg.evaluate("ST.qs.every(q=>BANK.set.has(q.s.id)||q.s.custom)"), '%s：題目都來自句庫' % name)
+        if n > 12:
+            R.check(pg.evaluate("new Set(ST.qs.map(q=>q.s.id)).size") == 12, '%s：句子不夠，每句至少出現一次，其餘重複' % name)
+            R.check(pg.evaluate("(()=>{const m={};ST.qs.forEach(q=>{m[q.s.id]=(m[q.s.id]||0)+1});return Math.max(...Object.values(m))})()") <= 3, '%s：同一句最多出現 3 次' % name)
+            R.check(pg.evaluate("ST.qs.every((q,i)=>i===0||ST.qs[i-1].s.id!==q.s.id)"), '%s：同一句不會連續出現' % name)
+        R.check(not errs, '%s：沒有網頁錯誤 %s' % (name, errs))
+        b.close()
+    # 玩 30 題：題號 1/30、星星按比例、成績回傳題數 30
+    b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=dict(cfg_db(12, {'n': 30, 'mix': 'even'}), **{'classes/' + CID: {'owner': 'T1', 'showBoard': False}}))
+    pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    R.check(pg.evaluate("document.querySelector('.gl').textContent.trim()").startswith('1/30'), '30 題：上方顯示 1/30')
+    for i in range(30):
+        solve_one(pg, True); pg.evaluate("nextQ()")
+    pg.wait_for_timeout(800)
+    R.check(pg.evaluate("ST.screen") == 'result' and pg.evaluate("ST.final.firstOK") == 30 and pg.evaluate("ST.final.stars") == 3, '30 題全對：3 顆星')
+    R.check('30/30' in pg.inner_text('#app'), '結果頁顯示 30/30')
+    dbx = pg.evaluate("window.__db")
+    sk = [k for k in dbx if k.startswith('class_scores/')]
+    R.check(sk and dbx[sk[0]]['extra']['q'] == 30 and dbx[sk[0]]['extra']['ok'] == 30, '成績回傳：題數 30、答對 30')
+    b.close()
+    # 星星按比例：30 題只對 20 題（第一次答對）＝ 6.7/10 → 1 顆星
+    b, pg, errs = page(p, '?bank=' + SID, db=cfg_db(12, {'n': 30, 'mix': 'even'}))
+    pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    for i in range(30):
+        if i < 20: solve_one(pg, True)
+        else: solve_one(pg, False); solve_one(pg, True)
+        pg.evaluate("nextQ()")
+    pg.wait_for_timeout(600)
+    R.check(pg.evaluate("ST.final.firstOK") == 20 and pg.evaluate("ST.final.stars") == 1, '30 題第一次答對 20 題：1 顆星（按比例）')
+    b.close()
+    # 壞設定：亂寫的 cfg → 回到 10 題、照原本
+    for bad in [{'n': 99, 'mix': 'zzz'}, {'n': '20', 'mix': 'orig'}, 'oops', {'n': 20}]:
+        b, pg, errs = page(p, '?bank=' + SID, db=cfg_db(12, bad))
+        pg.fill('#nm', 'Ana'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+        exp_n = 20 if (isinstance(bad, dict) and bad.get('n') in (20, '20')) else 10   # 數字寫成文字也認得；比例不對就用照原本
+        R.check(pg.evaluate("ST.qs.length") == exp_n, '亂寫的 cfg %s：不當機，題數 %s' % (bad, pg.evaluate("ST.qs.length")))
+        R.check(not errs, '亂寫的 cfg 沒有網頁錯誤 %s' % errs)
+        b.close()
+
 # ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
 import subprocess
 _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)
