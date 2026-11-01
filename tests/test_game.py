@@ -703,6 +703,7 @@ with sync_playwright() as p:
     # 玩兩題都答錯（2 次機會用完）：ok = 0
     b, pg, errs = page(p, '?class=' + CID + '&bank=' + SID, db=clsdb)
     pg.fill('#nm', 'Zoe'); pg.locator('#bankStart').click(); pg.wait_for_timeout(400)
+    pg.evaluate("()=>{ST.qs[0].type='A';ST.qi=0;newCur();render();}"); pg.wait_for_timeout(150)   # 固定成排卡片題：答錯一定是錯（自訂句子重複時，選項文字可能跟答案一樣）
     solve_one(pg, False); solve_one(pg, False); R.check(pg.evaluate("ST.cur.done && !ST.cur.ok"), '兩次都答錯：這題結束')
     pg.evaluate("nextQ()")
     for i in range(9):
