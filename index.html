@@ -153,7 +153,16 @@ rt{font-size:.5em;color:var(--sub);font-weight:400;letter-spacing:0}
 .tools>.mini{border:1px solid var(--line);border-radius:8px}
 .mini.on{background:var(--acc);color:var(--ink)}
 .sheet{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(59,58,55,.25);display:flex;align-items:flex-end;justify-content:center;z-index:10}
-.sheetcard{width:100%;max-width:520px;background:var(--card);border-radius:14px 14px 0 0;padding:16px 16px 26px;border:1px solid var(--line)}
+.bbtn{display:flex;align-items:center;gap:8px}
+.ib{font-family:Georgia,serif;font-weight:700}
+.hh{margin:12px 0 6px;font-size:15px}
+.hol{margin:0;padding-left:1.4em;font-size:14px;line-height:1.6}
+.hol .dl .s{font-size:12px;color:var(--sub)}
+.lvbox{background:var(--bg,#f4f1ea);border-radius:12px;padding:9px 12px;margin:6px 0;font-size:14px;line-height:1.5}
+.lvbox b{display:block;font-size:14px}
+.lvbox .dl .s{font-size:12px;color:var(--sub)}
+html.sheeting #hgCopy{display:none!important}
+.sheetcard{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;width:100%;max-width:520px;background:var(--card);border-radius:14px 14px 0 0;padding:16px 16px 26px;border:1px solid var(--line)}
 .vlist{max-height:60vh;overflow:auto;margin-top:8px}
 .vrow{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 0;border-top:1px solid var(--line)}
 .vz{font-size:26px;min-width:74px}
@@ -1526,7 +1535,7 @@ if(!cfg||typeof cfg!=='object')cfg=Object.assign({},cfg0);
 function syncCfg(){cfg.lang=S.lang;cfg.zh=S.script==='simp'?'sc':'tc';cfg.read=PHON2READ[S.phon];cfg.speed=S.rate;}
 syncCfg();
 let prog;try{prog=JSON.parse(localStorage.getItem('bei_prog')||'{}');}catch(e){prog={};}
-const ST={paused:false,pauseAt:0,set:false,setPaused:false,confirm:null,confirmWasPaused:false,screen:'start',lv:0,qs:[],qi:0,score:0,streak:0,firstOK:0,results:[],cur:null,lbRows:null,final:null,look:null,vocab:false,vocabList:[]};
+const ST={paused:false,pauseAt:0,set:false,info:false,setPaused:false,confirm:null,confirmWasPaused:false,screen:'start',lv:0,qs:[],qi:0,score:0,streak:0,firstOK:0,results:[],cur:null,lbRows:null,final:null,look:null,vocab:false,vocabList:[]};
 /* 介面文字：中文大字在上、西文／英文小字在下（跟「跑吧！漢字」同款）；純中文模式只有中文。
    T()＝兩行版（放在區塊、按鈕裡）；Tp()＝同一行「中文 · 西文」（放在句子中間、placeholder、aria-label）。 */
 const _TC={};
@@ -1751,7 +1760,7 @@ if(document.readyState!=='loading')bankLoad();
 /* ---------- 流程 ---------- */
 function stopSp(){try{spId++;if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
 function toggleRev(){ST.revOpen=!ST.revOpen;render();}
-function go(s){if(s==='levels')s='start';ST.revOpen=false;stopSp();ST.vocab=false;ST.look=null;ST.screen=s;ST.paused=false;ST.set=false;ST.confirm=null;ST.setPaused=false;render();window.scrollTo(0,0);{const a=$('app');if(a)a.scrollTop=0;}}
+function go(s){if(s==='levels')s='start';ST.revOpen=false;stopSp();ST.vocab=false;ST.look=null;ST.screen=s;ST.paused=false;ST.set=false;ST.info=false;ST.confirm=null;ST.setPaused=false;render();window.scrollTo(0,0);{const a=$('app');if(a)a.scrollTop=0;}}
 function setShared(p){Object.assign(S,p);writeSettings(S);syncCfg();render();}
 function setCfg(k,v){
  if(k==='lang')return setShared({lang:v});
@@ -1774,6 +1783,8 @@ function askConfirm(k){ST.confirmWasPaused=ST.paused;pauseGame();ST.confirm=k;re
 function confirmNo(){ST.confirm=null;if(ST.confirmWasPaused)render();else resumeGame();}
 function confirmYes(){const k=ST.confirm;ST.confirm=null;ST.paused=false;if(k==='menu')go('levels');else beginLevel();}
 function openSet(){ST.setPaused=pauseGame();ST.set=true;render();}
+function openInfo(){ST.info=true;render();}
+function closeInfo(){ST.info=false;render();}
 function closeSet(){ST.set=false;if(ST.setPaused){ST.setPaused=false;resumeGame();}else render();}
 function openLevel(n){
  const el=$('nm'),v=(el?el.value:(cfg.name||'')).trim();
@@ -1940,6 +1951,17 @@ function vocabHTML(){
   return `<div class="vrow"><div class="vz">${esc(zhOf(k))}</div><div class="vm"><div class="vp">${esc(readLine(k))}</div>${isZH()?'':`<div>${esc(main)}</div><div class="vp">${esc(other)}</div>`}</div><button class="vsp" onclick="speakWord('${k.tc}')" aria-label="${esc(Tp().play)}">▶</button></div>`;}).join('');
  return `<div class="sheet" onclick="closeLook()"><div class="sheetcard" onclick="event.stopPropagation()"><div class="row" style="justify-content:space-between"><h2 style="margin:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v15H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 20.5V5.5"/><path d="M8.5 8.5h6M8.5 12h4"/></svg>${t.vocab}</h2><button class="btn ghost" onclick="closeLook()">${t.close}</button></div><div class="vlist">${rows}</div></div></div>`;
 }
+function infoHTML(){
+ const sc=cfg.zh==='sc',en=cfg.lang==='en';
+ const D=(zt,zs,es,e)=>{const z=sc?zs:zt,sub=isZH()?'':(en?e:es);return sub?`<span class="dl"><span class="z">${z}</span><span class="s">${sub}</span></span>`:z;};
+ const li=(a,b,c,d)=>`<li>${D(a,b,c,d)}</li>`;
+ const lv=(n,a)=>`<div class="lvbox"><b>${D('關卡 '+n,'关卡 '+n,'Nivel '+n,'Level '+n)}</b>${D(a[0],a[1],a[2],a[3])}</div>`;
+ const S=[["選一個關卡，輸入名字", "选一个关卡，输入名字", "Elige un nivel y escribe tu nombre", "Pick a level and type your name"], ["每次 10 題：排句子、選句子、聽音選圖", "每次 10 题：排句子、选句子、听音选图", "10 preguntas: ordenar, elegir la oración, escuchar y elegir la imagen", "10 questions: arrange, pick the sentence, listen and pick the picture"], ["點一下句子裡的字，可以看意思", "点一下句子里的字，可以看意思", "Toca una palabra para ver su significado", "Tap a word to see its meaning"], ["卡住時，用「小字典」或「提示」（提示扣 20 分）", "卡住时，用「小字典」或「提示」（提示扣 20 分）", "Si te atascas, usa el mini diccionario o la pista (−20)", "If you're stuck, use the mini dictionary or the hint (−20)"], ["題目怪怪的，按 🚩 回報", "题目怪怪的，按 🚩 回报", "Si algo se ve raro, pulsa 🚩", "If something looks off, tap 🚩"]],V=[["有說是誰做的：碗被弟弟打破了", "有说是谁做的：碗被弟弟打破了", "Se dice quién lo hizo: 碗被弟弟打破了", "Who did it is stated: 碗被弟弟打破了"], ["沒說是誰做的：手機被摔壞了", "没说是谁做的：手机被摔坏了", "No se dice quién lo hizo: 手機被摔壞了", "Who did it is not stated: 手機被摔壞了"], ["否定：杯子沒被打破", "否定：杯子没被打破", "Negación (antes de 被): 杯子沒被打破", "Negation (before 被): 杯子沒被打破"], ["還沒發生的事：會被、不要被", "还没发生的事：会被、不要被", "Lo que aún no pasa: 會被, 不要被", "Things that haven't happened yet: 會被, 不要被"]];
+ return `<div class="sheet mid" onclick="closeInfo()"><div class="sheetcard" onclick="event.stopPropagation()"><h2 style="margin:0 0 4px">ⓘ ${D('說明','说明','Ayuda','Help')}</h2>
+ <h4 class="hh">${D('怎麼玩','怎么玩','Cómo jugar','How to play')}</h4><ol class="hol">${S.map(x=>li(...x)).join('')}</ol>
+ <h4 class="hh">${D('三個關卡','三个关卡','Los niveles','The levels')}</h4>${V.map((a,i)=>lv(i+1,a)).join('')}
+ <div style="margin-top:14px"><button class="btn primary block" onclick="closeInfo()">${D('完成','完成','Listo','Done')}</button></div></div></div>`;
+}
 function setHTML(){
  const t=T(),sc=cfg.zh==='sc',en=cfg.lang==='en';
  /* 跟「跑吧！漢字」同款：中文大字在上、西文／英文小字在下；純中文模式只留中文 */
@@ -1958,6 +1980,7 @@ function confirmHTML(){
 function sheetHTML(){
  if(ST.confirm)return confirmHTML();
  if(ST.set)return setHTML();
+ if(ST.info)return infoHTML();
  if(ST.vocab)return vocabHTML();
  const k=ST.look;if(!k)return '';const t=T(),g=gloss(k.tc);
  const main=cfg.lang==='es'?g[0]:g[1],other=cfg.lang==='es'?g[1]:g[0];
@@ -1973,7 +1996,7 @@ const HOME_IDS=[1,31,226,92,301];
 const thumb=(id,k)=>scene(id)[k];
 function titleHTML(cls){const t=T(),n2=NAME2();return `<div class="ttl ${cls||''}"><h1>被</h1>${n2?`<div class="n2">${n2}</div>`:''}<div class="sub">${t.sub}</div></div>`;}
 function nameHTML(){const t=T();return `<div class="card"><div class="lab" style="margin-top:0">${t.name}</div><input id="nm" type="text" maxlength="16" placeholder="${esc(Tp().ph)}" value="${esc(cfg.name)}" oninput="this.classList.remove('err');$('nerr').textContent=''"><div class="nerr" id="nerr"></div></div>`;}
-function gearBar(){return `<div class="bar"><div></div><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div>`;}
+function gearBar(){return `<div class="bar"><div></div><div class="bbtn"><button class="ic ib" onclick="openInfo()" aria-label="Info">i</button><button class="ic" onclick="openSet()" aria-label="${esc(Tp().settings)}">⚙</button></div></div>`;}
 function lvName(l){return cfg.zh==='sc'?l.sc:l.tc;}
 function renderBankStart(){
  const t=T(),tl=[-4,2,-2,3],ids=(BANK.ids&&BANK.ids.length?BANK.ids:[DATA[0].id,DATA[Math.floor(DATA.length/3)].id,DATA[Math.floor(DATA.length*2/3)].id]).slice(0,4);
@@ -2069,7 +2092,7 @@ function render(){
  const el=$('app');if(!el)return;
  const nm=$('nm');if(nm&&ST.screen==='start')cfg.name=nm.value;
  const gf=ST.screen==='game';el.className=gf?'gfix':'';document.documentElement.classList.toggle('gfix',gf);document.title=isZH()?'被':'被 · '+NAME2();
- el.innerHTML=m[ST.screen]()+sheetHTML();
+ el.innerHTML=m[ST.screen]()+sheetHTML();document.documentElement.classList.toggle('sheeting',!!el.querySelector('.sheet'));
 }
 document.addEventListener('click',e=>{const tk=e.target.closest&&e.target.closest('.tk');if(!tk)return;if(!tk.closest('.sent'))return;e.stopPropagation();e.preventDefault();showLook(tk.dataset.t);},true);
 document.addEventListener('DOMContentLoaded',render);
