@@ -1926,8 +1926,9 @@ function finishLevel(){
  try{window.HGPlays&&HGPlays.end({score:ST.score,name:cfg.name});}catch(e){}
  go('result');
 }
-function showLook(tc){ST.look=TOKMAP[tc]||null;ST.vocab=false;render();}
-function closeLook(){ST.look=null;ST.vocab=false;render();}
+function keepScroll(f){const a=$('app'),q=a&&a.querySelector('.qcard');const p=[window.scrollY,a?a.scrollTop:0,q?q.scrollTop:0];f();const a2=$('app'),q2=a2&&a2.querySelector('.qcard');window.scrollTo(0,p[0]);if(a2)a2.scrollTop=p[1];if(q2)q2.scrollTop=p[2];}
+function showLook(tc){ST.look=TOKMAP[tc]||null;ST.vocab=false;keepScroll(render);}
+function closeLook(){ST.look=null;ST.vocab=false;keepScroll(render);}
 function openVocab(){
  const q=ST.qs[ST.qi],seen=new Set(),u=[];q.s.tok.forEach(t=>{if(!seen.has(t.tc)){seen.add(t.tc);u.push(t);}});
  let o=shuffle(u),n=0;while(u.length>1&&o.every((t,i)=>t===u[i])&&n++<10)o=shuffle(u);
