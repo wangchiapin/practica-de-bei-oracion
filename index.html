@@ -65,6 +65,33 @@ input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);borde
 .home{max-width:720px;margin:0 auto}
 .home h2.pick{font-size:16px;margin:18px 0 10px;font-weight:500}
 .home .lvcard{margin-bottom:10px}
+@media (max-height:700px){
+.home.hb{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}
+.home.hb>*{grid-column:1/-1}
+.home.hb>.btn.block,.home.hb>#teacherLink{grid-column:auto}
+.home.hb>.btn.block:last-child{grid-column:1/-1}
+.home.hb>#teacherLink{margin-top:0!important}
+.hb>.bar{margin:0 0 2px}
+.hb .strip{padding:0 6px}
+.hb .tile{width:22%;padding:3px;border-radius:5px}
+.hb .tile svg{border-radius:2px}
+.hb .ttl{margin:2px 0 6px}
+.ttl h1{font-size:38px}
+.hb .ttl .n2{font-size:13px;margin-top:0}
+.hb .ttl .sub{margin-top:2px;font-size:12px}
+.hb .ttl .sub small{display:none}
+.hb>.card{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:6px}
+.hb>.card .lab{margin:0!important;flex:0 0 auto;max-width:34%}
+.hb>.card input{flex:1;min-width:0;padding:8px 10px}
+.hb>.card .nerr{display:none}
+.hb>.card .nerr:not(:empty){display:block}
+.home h2.pick{font-size:14px;margin:4px 0 6px}
+.tickets{gap:6px;margin-bottom:8px}
+.ticket{padding:4px 12px 4px 6px}
+.ticket .th{width:60px}
+.ticket .t{font-size:17px}
+.hb>.btn.block{padding:8px}
+}
 .nerr{color:#a4503a;font-size:13px;min-height:0;margin-top:6px}
 input.err{border-color:#a4503a}
 .lvcard:disabled{opacity:.45;cursor:default}

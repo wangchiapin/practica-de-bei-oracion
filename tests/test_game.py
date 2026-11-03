@@ -780,6 +780,15 @@ if True:
     _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_blocks.py'), '--check'], capture_output=True, text=True)
     R.check(_r.returncode == 0, 'blocks.json 與遊戲一致、每個組合都畫得出來：' + (_r.stdout + _r.stderr).strip()[:120])
 
+# ===== 首頁：手機高度 656px（西語／只中文）都要一屏放得下，不用上下捲動；小圖和 ⓘ ⚙ 都還在 =====
+with sync_playwright() as p:
+    for _nm, _st in [('西語＋拼音', {'lang': 'es', 'zh': 'tc', 'read': 'py'}), ('只顯示中文', {'lang': 'zh', 'zh': 'tc', 'read': 'off'})]:
+        b, pg, errs = page(p, settings=_st, width=390, height=656)
+        m = pg.evaluate("""()=>{const l=[...document.querySelectorAll('.home>*')].pop().getBoundingClientRect().bottom;const c=document.getElementById('hgCopy');const ct=c?c.getBoundingClientRect().top:innerHeight;const s=document.querySelector('.hb .strip');return {last:Math.round(l),copy:Math.round(ct),strip:s?Math.round(s.getBoundingClientRect().height):0,ib:!!document.querySelector('.hb .bar .ib'),gear:!!document.querySelector('.hb .bar .ic:not(.ib)'),ticket:document.querySelectorAll('.ticket').length}}""")
+        R.check(m['last'] <= m['copy'], '首頁 656px 高（%s）：內容放得進版權列上方 %s' % (_nm, m))
+        R.check(m['strip'] > 20 and m['ib'] and m['gear'] and m['ticket'] >= 3, '首頁（%s）：上方小圖、ⓘ、⚙、關卡都在 %s' % (_nm, m))
+        b.close()
+
 # ===== 句子清單檔 sentences.json 要跟 index.html 的句子一致（老師中心「自訂句庫」靠它挑句子）=====
 import subprocess
 _r = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), '..', 'tools', 'make_sentences.py'), '--check'], capture_output=True, text=True)
