@@ -1656,13 +1656,13 @@ const CLS_GAME='bei';
 const CLS=(function(){const q=new URLSearchParams(location.search),id=String(q.get('class')||'').toLowerCase();return{on:/^[a-z0-9]{8,32}$/.test(id),id,data:null,fatal:'',msg:'',rows:null};})();
 const CLS_TXT={
  maint:['維修中，請稍後再來','维修中，请稍后再来','En mantenimiento, vuelve más tarde','Under maintenance — please come back later'],
- linkBad:['這個連結已失效，請向老師確認','这个链接已失效，请向老师确认','Este enlace ya no es válido; pregunta a tu profesor','This link is no longer valid — please ask your teacher'],
+ linkBad:['這個連結已失效，請向老師確認','这个连结已失效，请向老师确认','Este enlace ya no es válido; pregunta a tu profesor','This link is no longer valid — please ask your teacher'],
  linkOff:['暫時連不上，請稍後再試','暂时连不上，请稍后再试','No se pudo conectar; inténtalo más tarde','Could not connect — please try again later'],
  note:['班級模式：成績會回傳給老師','班级模式：成绩会回传给老师','Modo clase: tus resultados se envían al profesor','Class mode: your scores go to your teacher'],
  sending:['成績傳送中…','成绩传送中…','Enviando resultado…','Sending score…'],
  sentOk:['成績已回傳給老師','成绩已回传给老师','Resultado enviado al profesor','Score sent to your teacher'],
- sentFail:['成績沒有送出，請檢查網路','成绩没有送出，请检查网络','No se pudo enviar el resultado; revisa tu conexión','Score not sent — check your connection'],
- sentExpired:['這個班級連結目前無法記錄成績，請通知老師','这个班级链接目前无法记录成绩，请通知老师','Este enlace de clase no puede guardar resultados; avisa a tu profesor','This class link cannot record scores right now — tell your teacher'],
+ sentFail:['成績沒有送出，請檢查網路','成绩没有送出，请检查网路','No se pudo enviar el resultado; revisa tu conexión','Score not sent — check your connection'],
+ sentExpired:['這個班級連結目前無法記錄成績，請通知老師','这个班级连结目前无法记录成绩，请通知老师','Este enlace de clase no puede guardar resultados; avisa a tu profesor','This class link cannot record scores right now — tell your teacher'],
  board:['班級排行榜','班级排行榜','Clasificación de la clase','Class leaderboard']
 };
 const clsT=k=>{const a=CLS_TXT[k],zh=cfg.zh==='sc'?a[1]:a[0];return cfg.lang==='zh'?zh:zh+' · '+(cfg.lang==='es'?a[2]:a[3]);};
@@ -2002,7 +2002,7 @@ function setHTML(){
  const t=T(),sc=cfg.zh==='sc',en=cfg.lang==='en';
  /* 跟「跑吧！漢字」同款：中文大字在上、西文／英文小字在下；純中文模式只留中文 */
  const D=(zt,zs,es,e)=>{const z=sc?zs:zt,sub=isZH()?'':(en?e:es);return sub?`<span class="dl"><span class="z">${z}</span><span class="s">${sub}</span></span>`:z;};
- return `<div class="sheet" onclick="closeSet()"><div class="sheetcard" onclick="event.stopPropagation()"><h2 style="margin:0 0 4px">${D('設定','设置','Ajustes','Settings')}</h2>
+ return `<div class="sheet" onclick="closeSet()"><div class="sheetcard" onclick="event.stopPropagation()"><h2 style="margin:0 0 4px">${D('設定','设定','Ajustes','Settings')}</h2>
  <div class="lab">${D('字形','字形','Caracteres','Characters')}</div><div class="row">${seg('zh','tc','繁體')}${seg('zh','sc','简体')}</div>
  <div class="lab">${D('語言','语言','Idioma','Language')}</div><div class="row">${seg('lang','es',`<span class="dl"><span class="z">中文＋</span><span class="s">Español</span></span>`)}${seg('lang','en',`<span class="dl"><span class="z">中文＋</span><span class="s">English</span></span>`)}${seg('lang','zh','只有中文')}</div>
  <div class="lab">${D('拼音／注音','拼音／注音','Pinyin / Zhuyin','Pinyin / Zhuyin')}</div><div class="row r4">${seg('read','py',D('拼音','拼音','Pinyin','Pinyin'))}${seg('read','zy',D('注音','注音','Zhuyin','Zhuyin'))}${seg('read','both',D('兩個都顯示','两个都显示','Ambos','Both'))}${seg('read','none',D('關','关','Ocultar','Off'))}</div>
